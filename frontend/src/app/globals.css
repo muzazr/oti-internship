@@ -4,38 +4,48 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* semakin besar semakin terang */
-:root {
-  --neutral-100: #000000;
-  --neutral-200: #191b23;
-  --neutral-300: #434655;
-  --neutral-400: #737686;
-  --neutral-500: #c3c6d7;
-  --neutral-600: #ededf9;
-  --neutral-700: #f3f3fe;
-  --neutral-800: #ffffff;
-
-  --primary-100: #004ac6;
-  --primary-200: #2563eb;
-  --primary-300: #b4c5ff;
-  --primary-400: #dbe1ff;
-  --primary-500: #e2e8f0;
-
-  --secondary: #fd761a;
-
-  --error-100: #93000a;
-  --error-200: #ba1a1a;
-  --error-300: #ffdad6;
-
-  --success-100: #15803d;
-  --success-200: #d6ffd7;
-}
-
 .dark {
   /*Ini kalau mau diimplement dark mode bisa diisi2 pake apapun yg ada */
 }
 
 @theme {
+  --color-background: var(--background);
+
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-1000: var(--primary-1000);
+  --color-primary-1100: var(--primary-1100);
+  --color-primary-1200: var(--primary-1200);
+
+  --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200);
+  --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400);
+  --color-secondary-500: var(--secondary-500);
+  --color-secondary-600: var(--secondary-600);
+  --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800);
+  --color-secondary-900: var(--secondary-900);
+  --color-secondary-1000: var(--secondary-1000);
+
+  --color-tertiary-100: var(--tertiary-100);
+  --color-tertiary-200: var(--tertiary-200);
+  --color-tertiary-300: var(--tertiary-300);
+  --color-tertiary-400: var(--tertiary-400);
+  --color-tertiary-500: var(--tertiary-500);
+  --color-tertiary-600: var(--tertiary-600);
+  --color-tertiary-700: var(--tertiary-700);
+  --color-tertiary-800: var(--tertiary-800);
+  --color-tertiary-900: var(--tertiary-900);
+  --color-tertiary-1000: var(--tertiary-1000);
+
   --color-neutral-100: var(--neutral-100);
   --color-neutral-200: var(--neutral-200);
   --color-neutral-300: var(--neutral-300);
@@ -44,14 +54,8 @@
   --color-neutral-600: var(--neutral-600);
   --color-neutral-700: var(--neutral-700);
   --color-neutral-800: var(--neutral-800);
-
-  --color-primary-100: var(--primary-100);
-  --color-primary-200: var(--primary-200);
-  --color-primary-300: var(--primary-300);
-  --color-primary-400: var(--primary-400);
-  --color-primary-500: var(--primary-500);
-
-  --color-secondary: var(--secondary);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-1000: var(--neutral-1000);
 
   --color-error-100: var(--error-100);
   --color-error-200: var(--error-200);
@@ -61,11 +65,70 @@
   --color-success-200: var(--success-200);
 }
 
+:root {
+  --background: #faf8ff;
+  --foreground: #191b23;
+  --foreground-secondary: #434655;
+
+  --primary-100: #000000;
+  --primary-200: #00174b;
+  --primary-300: #002a78;
+  --primary-400: #003ea8;
+  --primary-500: #0053db;
+  --primary-600: #346ef6;
+  --primary-700: #618bff;
+  --primary-800: #8ca8ff;
+  --primary-900: #b4c5ff;
+  --primary-1000: #dbe1ff;
+  --primary-1100: #eef0ff;
+  --primary-1200: #ffffff;
+
+  --secondary-100: #341100;
+  --secondary-200: #552100;
+  --secondary-300: #783200;
+  --secondary-400: #9d4300;
+  --secondary-500: #c45600;
+  --secondary-600: #ec6a06;
+  --secondary-700: #ff8d4b;
+  --secondary-800: #ffb690;
+  --secondary-900: #ffdbca;
+  --secondary-1000: #ffede6;
+
+  --tertiary-100: #360f00;
+  --tertiary-200: #581e00;
+  --tertiary-300: #7d2d00;
+  --tertiary-400: #a43e00;
+  --tertiary-500: #c9510d;
+  --tertiary-600: #eb6a29;
+  --tertiary-700: #ff8c58;
+  --tertiary-800: #ffdbcdd9;
+  --tertiary-900: #ffdbcd;
+  --tertiary-1000: #ffffff;
+
+  --neutral-100: #ffffff;
+  --neutral-200: #e8e8e8;
+  --neutral-300: #d2d2d2;
+  --neutral-400: #bbbbbb;
+  --neutral-500: #a4a4a4;
+  --neutral-600: #8e8e8e;
+  --neutral-700: #777777;
+  --neutral-800: #606060;
+  --neutral-900: #4a4a4a;
+  --neutral-1000: #333333;
+
+  --error-100: #93000a;
+  --error-200: #ba1a1a;
+  --error-300: #ffdad6;
+
+  --success-100: #15803d;
+  --success-200: #d6ffd7;
+}
+
 @layer base {
   body {
-    @apply bg-primary-500 text-neutral-200;
+    @apply bg-background text-foreground;
   }
   html {
-    font-family: "Plus Jakarta Sans", Fantasy;
+    font-family: "Plus Jakarta Sans";
   }
 }

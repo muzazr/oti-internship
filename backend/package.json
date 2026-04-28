@@ -4,8 +4,8 @@
   "description": "Backend for WhatsApp-task hybrid system",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon app.js",
-    "start": "node app.js",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
     "webhook": "node webhook_test.js"
   },
   "keywords": [],

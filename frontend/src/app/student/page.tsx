@@ -13,8 +13,7 @@ const deadline = {
   month: "April",
   year: "2024",
 }
-const linkToAssignment = "" // Ini utk buttonnya nanti. Masih bingung...
-const completed = true
+const completed = false
 // ^Edit these
 
 const LandingPageSiswa = () => {
@@ -44,7 +43,7 @@ const LandingPageSiswa = () => {
           />
           <LeftRight info="Status" content={<Pill finished={completed} />} />
         </Table>
-        <Button variant="default">
+        <Button variant="default" link="./student/assignment">
           Kerjakan Sekarang <ArrowRight className="size-4.5" />
         </Button>
         <p className="flex justify-center items-center gap-2 text-sm">

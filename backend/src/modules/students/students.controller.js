@@ -5,11 +5,7 @@ import { AppError } from "../../shared/utils/AppError.js"
 
 // get list students
 export const listStudents = asyncHandler(async (req, res) => {
-    const { class_id } = req.query
-
-    if (!class_id) {
-        throw new AppError("class_id query parameter is required", 400)
-    }
+    const { class_id } = req.validatedQuery
 
     const ownerClass = await studentsService.verifyClassOwnership(class_id, req.user.id)
 

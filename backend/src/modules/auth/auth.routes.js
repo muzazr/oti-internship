@@ -1,12 +1,9 @@
 import express from "express"
+import { requireAuth } from "./auth.middleware.js"
+import { getMe } from "./auth.controller.js"
 
 const router = express.Router()
 
-router.get("/", (req, res) => {
-    res.json({
-        ok: true,
-        message: "auth module is ready",
-    })
-})
+router.get("/me", requireAuth, getMe)
 
 export default router

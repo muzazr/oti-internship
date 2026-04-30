@@ -3,18 +3,17 @@ import Table, { LeftRight } from "@/components/student/tableThingy"
 import Pill from "@/components/student/pill"
 import Button from "@/components/student/button"
 import { ArrowRight, Lock } from "lucide-react"
+import { DBtoDate } from "@/lib/student"
 
 // vEdit these for backend fetching
 const name = "Maria"
 const assignmentName = "Aljabar Dasar"
 const studentClass = "8A"
-const deadline = {
-  date: "24",
-  month: "April",
-  year: "2024",
-}
+const deadlineInDB = "2024-04-24 23:59" // yyyy-mm-dd hh:mm
 const completed = false
 // ^Edit these
+
+const deadline = DBtoDate(deadlineInDB)
 
 const LandingPageSiswa = () => {
   return (

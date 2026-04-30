@@ -3,19 +3,17 @@ import Table, { LeftRight } from "@/components/student/tableThingy"
 import Pill from "@/components/student/pill"
 import Button from "@/components/student/button"
 import { ArrowRight, Lock } from "lucide-react"
+import { DBtoDate } from "@/lib/student"
 
 // vEdit these for backend fetching
 const name = "Maria"
 const assignmentName = "Aljabar Dasar"
 const studentClass = "8A"
-const deadline = {
-  date: "24",
-  month: "April",
-  year: "2024",
-}
-const linkToAssignment = "" // Ini utk buttonnya nanti. Masih bingung...
-const completed = true
+const deadlineInDB = "2024-04-24 23:59" // yyyy-mm-dd hh:mm
+const completed = false
 // ^Edit these
+
+const deadline = DBtoDate(deadlineInDB)
 
 const LandingPageSiswa = () => {
   return (
@@ -44,7 +42,7 @@ const LandingPageSiswa = () => {
           />
           <LeftRight info="Status" content={<Pill finished={completed} />} />
         </Table>
-        <Button variant="default">
+        <Button variant="default" link="./student/assignment">
           Kerjakan Sekarang <ArrowRight className="size-4.5" />
         </Button>
         <p className="flex justify-center items-center gap-2 text-sm">

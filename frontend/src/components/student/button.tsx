@@ -25,14 +25,14 @@ function handleVariants(variant: string) {
 const Button = ({ children, variant = "default", link = "" }: Props) => {
   return link === "" ? (
     <button
-      className={`p-4 font-bold flex justify-center text-xs gap-2 ${handleVariants(variant)}`}
+      className={`p-4 transition-all font-bold flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)}`}
     >
       {children}
     </button>
   ) : (
     <Link
       href={link}
-      className={`p-4 flex justify-center text-xs gap-2 ${handleVariants(variant)}`}
+      className={`p-4 transition-all flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)}`}
     >
       {children}
     </Link>

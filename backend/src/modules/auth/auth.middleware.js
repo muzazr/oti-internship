@@ -1,23 +1,13 @@
 import { supabaseAdmin } from "../../config/supabase.js"
 import { AppError } from "../../shared/utils/AppError.js"
 
-/**
- * Auth middleware: verifies Supabase JWT and attaches user profile to req.user.
- *
- * Flow:
- *  1. Extract Bearer token from Authorization header
- *  2. Verify JWT with Supabase Auth (server-side, not client-side)
- *  3. Fetch teacher profile from profiles table
- *  4. Attach { id, email, full_name, role } to req.user
- */
+
 export async function requireAuth(req, res, next) {
     try {
-        // 1. Check Supabase admin client is available
         if (!supabaseAdmin) {
             throw new AppError("Server configuration error: Supabase is not configured", 500)
         }
 
-        // 2. Extract Bearer token
         const authHeader = req.headers.authorization
 
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -30,7 +20,6 @@ export async function requireAuth(req, res, next) {
             throw new AppError("Missing access token", 401)
         }
 
-        // 3. Verify JWT with Supabase Auth (server-side verification)
         const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token)
 
         if (authError || !authData?.user) {
@@ -39,7 +28,6 @@ export async function requireAuth(req, res, next) {
 
         const authUser = authData.user
 
-        // 4. Fetch teacher profile from profiles table
         const { data: profile, error: profileError } = await supabaseAdmin
             .from("profiles")
             .select("id, full_name, role")
@@ -50,7 +38,6 @@ export async function requireAuth(req, res, next) {
             throw new AppError("Teacher profile not found. Please complete registration.", 403)
         }
 
-        // 5. Attach user info to request
         req.user = {
             id: profile.id,
             email: authUser.email,

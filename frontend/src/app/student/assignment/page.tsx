@@ -7,6 +7,7 @@ import {
   FileText,
   Paperclip,
   ArrowUpRight,
+  ArrowLeft,
 } from "lucide-react"
 import Image from "next/image"
 
@@ -73,6 +74,9 @@ function deadlineToDisplay() {
 const InstruksiPengerjaan = () => {
   return (
     <>
+      <Button className="py-2 w-fit font-medium" link="./">
+        <ArrowLeft className="size-4.5" /> Kembali
+      </Button>
       <section className="flex flex-col gap-3 mt-3 mb-4">
         <h2 className="font-semibold text-2xl">Detail Tugas</h2>
         <Pill

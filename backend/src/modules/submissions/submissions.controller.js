@@ -9,8 +9,16 @@ import { AppError } from "../../shared/utils/AppError.js"
 export const submitAssignment = asyncHandler(async (req, res) => {
     const { token } = req.params
 
+    console.log("===== SUBMISSION START =====")
+    console.log("SUBMISSION TOKEN:", token)
+    console.log("REQ BODY:", req.body)
+    console.log("REQ FILE:", req.file)
+    console.log("REQ FILES:", req.files)
+
     // validate token
     const link = await uploadLinksService.findByToken(token)
+
+    console.log("UPLOAD LINK FOUND:", link)
 
     if (!link) {
         throw new AppError("Invalid upload link", 404)
@@ -25,22 +33,38 @@ export const submitAssignment = asyncHandler(async (req, res) => {
     }
 
     const assignment = link.assignments
+
+    console.log("ASSIGNMENT FROM LINK:", assignment)
+
     if (!assignment || assignment.status === "closed" || assignment.status === "archived") {
         throw new AppError("This assignment is no longer accepting submissions", 410)
     }
 
-    // determine submission status
     const now = new Date()
     const isLate = assignment.deadline && now > new Date(assignment.deadline)
+
+    console.log("IS LATE:", isLate)
+    console.log("ALLOW LATE:", assignment.allow_late_submission)
 
     if (isLate && !assignment.allow_late_submission) {
         throw new AppError("The deadline has passed and late submissions are not allowed", 400)
     }
 
-    // validate files
     const files = req.files || []
-    const linksRaw = req.body.links ? JSON.parse(req.body.links) : []
+
+    let linksRaw = []
+    try {
+        linksRaw = req.body.links ? JSON.parse(req.body.links) : []
+    } catch (error) {
+        console.error("LINKS JSON PARSE ERROR:", error)
+        throw new AppError("Invalid links format. links must be valid JSON array", 400)
+    }
+
     const note = req.body.note || null
+
+    console.log("PARSED FILES COUNT:", files.length)
+    console.log("PARSED LINKS:", linksRaw)
+    console.log("NOTE:", note)
 
     if (!assignment.accepts_file && files.length > 0) {
         throw new AppError("This assignment does not accept file submissions", 400)
@@ -59,12 +83,17 @@ export const submitAssignment = asyncHandler(async (req, res) => {
     }
 
     for (const file of files) {
+        console.log("CHECK FILE:", {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+        })
+
         if (file.size > assignment.max_file_size_mb * 1024 * 1024) {
             throw new AppError(`File "${file.originalname}" exceeds the ${assignment.max_file_size_mb}MB limit`, 400)
         }
     }
 
-    // create/update submission
     const submissionData = {
         assignment_id: link.assignment_id,
         student_id: link.student_id,
@@ -74,20 +103,28 @@ export const submitAssignment = asyncHandler(async (req, res) => {
         submitted_at: now.toISOString(),
     }
 
+    console.log("SUBMISSION DATA:", submissionData)
+
     const submission = await submissionsService.createSubmission(submissionData)
 
-    // clean up old files/links if re-submitting
+    console.log("CREATED SUBMISSION:", submission)
+
     await submissionsService.deleteExistingFiles(submission.id)
 
-    // upload files to Supabase Storage
+    console.log("OLD FILES DELETED")
+
     for (let i = 0; i < files.length; i++) {
         const file = files[i]
         const uniqueName = `${crypto.randomUUID()}_${file.originalname}`
         const storagePath = `assignments/${link.assignment_id}/students/${link.student_id}/submissions/${submission.id}/${uniqueName}`
 
+        console.log("UPLOAD STORAGE PATH:", storagePath)
+
         await submissionsService.uploadFileToStorage(file.buffer, storagePath, file.mimetype)
 
-        await submissionsService.insertFileMetadata({
+        console.log("FILE UPLOADED TO STORAGE")
+
+        const fileMetadata = {
             submission_id: submission.id,
             bucket: "submissions",
             file_path: storagePath,
@@ -95,10 +132,15 @@ export const submitAssignment = asyncHandler(async (req, res) => {
             mime_type: file.mimetype,
             file_size_bytes: file.size,
             file_order: i + 1,
-        })
+        }
+
+        console.log("FILE METADATA:", fileMetadata)
+
+        await submissionsService.insertFileMetadata(fileMetadata)
+
+        console.log("FILE METADATA INSERTED")
     }
 
-    // insert submitted links
     if (linksRaw.length > 0) {
         const linkRows = linksRaw.map((l) => ({
             submission_id: submission.id,
@@ -106,11 +148,17 @@ export const submitAssignment = asyncHandler(async (req, res) => {
             label: l.label || null,
         }))
 
+        console.log("SUBMITTED LINK ROWS:", linkRows)
+
         await submissionsService.insertSubmittedLinks(linkRows)
+
+        console.log("SUBMITTED LINKS INSERTED")
     }
 
-    // mark upload link as used
     await uploadLinksService.markUsed(link.id)
+
+    console.log("UPLOAD LINK MARKED USED")
+    console.log("===== SUBMISSION SUCCESS =====")
 
     return successResponse(res, "Submission uploaded successfully", { id: submission.id }, 201)
 })

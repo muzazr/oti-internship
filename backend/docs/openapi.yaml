@@ -510,7 +510,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [class_id, full_name]
+              required: [class_id, full_name, student_code]
               properties:
                 class_id:
                   type: string
@@ -524,11 +524,12 @@ paths:
                 whatsapp_number:
                   type: string
                   maxLength: 20
+                  nullable: true
             example:
               class_id: "5a38bc2a-b0e2-44f3-a9ca-03adfb4bb606"
               full_name: "Andi Pratama"
               student_code: "001"
-              whatsapp_number: "6281234567890"
+              whatsapp_number: null
       responses:
         "201":
           description: Created
@@ -574,20 +575,22 @@ paths:
             schema:
               type: object
               properties:
+                class_id:
+                  type: string
+                  format: uuid
                 full_name:
                   type: string
                   maxLength: 200
                 student_code:
                   type: string
                   maxLength: 50
-                  nullable: true
                 whatsapp_number:
                   type: string
                   maxLength: 20
                   nullable: true
             example:
               full_name: "Andi Pratama"
-              student_code: null
+              student_code: "002"
               whatsapp_number: null
       responses:
         "200":
@@ -710,6 +713,13 @@ paths:
     post:
       tags: [Submissions]
       summary: Submit assignment files
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+          description: Upload link token
       requestBody:
         required: true
         content:

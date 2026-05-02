@@ -10,10 +10,17 @@ export const listSubjects = asyncHandler(async (req, res) => {
 })
 
 export const createSubject = asyncHandler(async (req, res) => {
-    const data = await subjectsService.create({
+    const payload = {
         ...req.body,
         teacher_id: req.user.id,
-    })
+    }
+
+    console.log("REQ USER:", req.user?.id)
+    console.log("REQ BODY:", req.body)
+    console.log("VALIDATED BODY:", req.validatedBody)
+    console.log("CREATE SUBJECT PAYLOAD:", payload)
+
+    const data = await subjectsService.create(payload)
 
     return successResponse(res, "Subject created successfully", data, 201)
 })

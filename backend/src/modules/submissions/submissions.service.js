@@ -7,7 +7,10 @@ export async function createSubmission(data) {
         .select()
         .single()
 
-    if (error) throw error
+    if (error) {
+        console.error("SUPABASE ERROR:", error)
+        throw error
+    }
     return submission
 }
 
@@ -19,7 +22,10 @@ export async function uploadFileToStorage(fileBuffer, storagePath, mimeType) {
             upsert: false,
         })
 
-    if (error) throw error
+    if (error) {
+        console.error("SUPABASE ERROR:", error)
+        throw error
+    }
     return data
 }
 
@@ -30,7 +36,10 @@ export async function insertFileMetadata(metadata) {
         .select()
         .single()
 
-    if (error) throw error
+    if (error) {
+        console.error("SUPABASE ERROR:", error)
+        throw error
+    }
     return data
 }
 
@@ -42,7 +51,10 @@ export async function insertSubmittedLinks(links) {
         .insert(links)
         .select()
 
-    if (error) throw error
+    if (error) {
+        console.error("SUPABASE ERROR:", error)
+        throw error
+    }
     return data
 }
 
@@ -59,7 +71,10 @@ export async function findById(id) {
         .eq("id", id)
         .single()
 
-    if (error) throw error
+    if (error) {
+        console.error("SUPABASE ERROR:", error)
+        throw error
+    }
     return data
 }
 
@@ -78,7 +93,10 @@ export async function grade(id, teacherId, score, feedback) {
         .select()
         .single()
 
-    if (error) throw error
+    if (error) {
+        console.error("SUPABASE ERROR:", error)
+        throw error
+    }
     return data
 }
 
@@ -87,7 +105,10 @@ export async function getSignedUrl(bucket, filePath) {
         .from(bucket)
         .createSignedUrl(filePath, 3600) // 1 hour
 
-    if (error) throw error
+    if (error) {
+        console.error("SUPABASE ERROR:", error)
+        throw error
+    }
     return data.signedUrl
 }
 

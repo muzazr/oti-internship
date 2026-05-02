@@ -42,9 +42,25 @@ export const createStudent = asyncHandler(async (req, res) => {
         throw new AppError("Class not found or you do not have permission", 404)
     }
 
-    const data = await studentsService.create(req.body)
+    const payload = {
+        class_id: req.body.class_id,
+        full_name: req.body.full_name,
+        student_code: req.body.student_code,
+        whatsapp_number: req.body.whatsapp_number || null,
+    }
 
-    return successResponse(res, "Student created successfully", data, 201)
+    console.log("REQ USER:", req.user.id)
+    console.log("CREATE STUDENT PAYLOAD:", payload)
+
+    try {
+        const data = await studentsService.create(payload)
+        return successResponse(res, "Student created successfully", data, 201)
+    } catch (error) {
+        if (error.code === "23505") {
+            throw new AppError("Student code already exists", 409)
+        }
+        throw error
+    }
 })
 
 // update student
@@ -59,9 +75,27 @@ export const updateStudent = asyncHandler(async (req, res) => {
         throw new AppError("Student not found or you do not have permission", 404)
     }
 
-    const data = await studentsService.update(req.params.id, req.body)
+    if (req.body.class_id && req.body.class_id !== existing.class_id) {
+        const ownerClass = await studentsService.verifyClassOwnership(req.body.class_id, req.user.id)
+        if (!ownerClass) {
+            throw new AppError("New class not found or you do not have permission", 404)
+        }
+    }
 
-    return successResponse(res, "Student updated successfully", data)
+    const payload = { ...req.body }
+    if (payload.whatsapp_number === "") {
+        payload.whatsapp_number = null
+    }
+
+    try {
+        const data = await studentsService.update(req.params.id, payload)
+        return successResponse(res, "Student updated successfully", data)
+    } catch (error) {
+        if (error.code === "23505") {
+            throw new AppError("Student code already exists", 409)
+        }
+        throw error
+    }
 })
 
 export const deleteStudent = asyncHandler(async (req, res) => {

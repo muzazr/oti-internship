@@ -1,11 +1,8 @@
 import React from "react"
 
-let lrVariant = []
-let udVariant = []
-
 const Table = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex-col border border-neutral-300 px-4 *:py-4 divide-y divide-solid divide-neutral-300">
+    <div className="flex-col w-full rounded-2xl border border-neutral-300 px-4 *:py-3 divide-y divide-solid divide-neutral-300">
       {children}
     </div>
   )
@@ -26,9 +23,16 @@ export const LeftRight = ({ info, content }: itemProps) => {
   )
 }
 
-// For
+// For up-down info-content
 export const UpDown = ({ info, content }: itemProps) => {
-  // Summary
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-foreground-secondary text-xs font-bold">{info}</p>
+      <p className="text-foreground text-lg font-medium flex items-center gap-2">
+        {content}
+      </p>
+    </div>
+  )
 }
 
 export default Table

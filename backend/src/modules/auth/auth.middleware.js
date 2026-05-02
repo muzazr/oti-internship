@@ -34,6 +34,9 @@ export async function requireAuth(req, res, next) {
             .eq("id", authUser.id)
             .single()
 
+        console.log("authUser.id", authUser.id)
+        console.log("profileError", profileError)
+
         if (profileError || !profile) {
             throw new AppError("Teacher profile not found. Please complete registration.", 403)
         }

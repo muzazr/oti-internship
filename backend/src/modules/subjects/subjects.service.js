@@ -30,7 +30,10 @@ export async function create(data) {
         .select()
         .single()
 
-    if (error) throw error
+    if (error) {
+        console.error("CREATE SUBJECT ERROR: ", error)
+        throw error
+    }
     return created
 }
 

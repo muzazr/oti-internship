@@ -7,6 +7,9 @@ import routes from "./src/routes.js"
 import { notFound } from "./src/shared/middlewares/notFound.js"
 import { errorHandler } from "./src/shared/middlewares/errorHandler.js"
 
+import swaggerUi from "swagger-ui-express"
+import { swaggerSpec } from "./src/config/swagger.js"
+
 const app = express()
 
 app.use(helmet())
@@ -22,6 +25,7 @@ app.get("/health", (req, res) => {
 })
 
 app.use("/api", routes)
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 app.use(notFound)
 app.use(errorHandler)

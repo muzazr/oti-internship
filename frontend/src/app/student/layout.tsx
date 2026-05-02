@@ -15,9 +15,7 @@ export default function RootLayout({
       </head>
       <body>
         <Header />
-        <main className="flex justify-center p-4">
-          <QueryProvider>{children}</QueryProvider>
-        </main>
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   )

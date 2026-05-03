@@ -13,7 +13,7 @@ import Button from "@/components/student/button"
 const steps = [
   { component: Step1, label: "Langkah 1" },
   { component: Step2, label: "Langkah 2" },
-  { component: Step3, label: "Submission Verdict" },
+  { component: Step3, label: "Langkah 3" },
 ]
 
 const SubmissionPage = () => {

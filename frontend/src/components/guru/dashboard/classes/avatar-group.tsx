@@ -1,39 +1,39 @@
-import Image from "next/image";
+"use client";
 
 interface AvatarGroupProps {
-  avatars: string[];
   totalCount: number;
   maxVisible?: number;
 }
 
-export function AvatarGroup({
-  avatars,
-  totalCount,
-  maxVisible = 2,
-}: AvatarGroupProps) {
-  const visibleAvatars = avatars.slice(0, maxVisible);
-  const remaining = totalCount - visibleAvatars.length;
+const avatarColors = [
+  "bg-blue-400",
+  "bg-emerald-400",
+  "bg-amber-400",
+  "bg-rose-400",
+  "bg-violet-400",
+];
+
+export function AvatarGroup({ totalCount, maxVisible = 2 }: AvatarGroupProps) {
+  const visibleCount = Math.min(maxVisible, totalCount);
+  const remaining = totalCount - visibleCount;
 
   return (
     <div className="flex items-center">
-      {visibleAvatars.map((src, index) => (
+      {Array.from({ length: visibleCount }).map((_, index) => (
         <div
           key={index}
-          className="relative h-8 w-8 overflow-hidden rounded-full border-2 border-white"
+          className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-white text-xs font-bold text-white ${
+            avatarColors[index % avatarColors.length]
+          }`}
           style={{ marginLeft: index === 0 ? 0 : "-8px" }}
         >
-          <Image
-            src={src}
-            alt={`Student ${index + 1}`}
-            fill
-            className="object-cover"
-          />
+          {String.fromCharCode(65 + index)}
         </div>
       ))}
 
       {remaining > 0 && (
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#EDEDED]"
+          className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#EDEDF8]"
           style={{ marginLeft: "-8px" }}
         >
           <span className="text-[10px] font-bold text-[#191B23]">

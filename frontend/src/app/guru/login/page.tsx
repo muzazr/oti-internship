@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LoginBrandingPanel } from "@/components/guru/login-branding-panel";
 import { LoginForm } from "@/components/guru/login-form";
 
@@ -18,9 +19,11 @@ export default function LoginGuruPage() {
         <div className="hidden sm:block absolute -top-[130px] -right-[50px] w-[629px] h-[540px] rounded-full bg-[#F4F6FF]" />
         <div className="hidden sm:block absolute -bottom-[200px] -left-[100px] w-[600px] h-[600px] rounded-full bg-[#FFF7F4]" />
 
-        {/* Login Card */}
+        {/* Login Card — Suspense needed for useSearchParams() */}
         <div className="relative z-10 w-full max-w-[440px]">
-          <LoginForm />
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
     </main>

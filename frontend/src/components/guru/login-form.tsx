@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -11,12 +11,18 @@ import {
   EyeOff,
   ArrowRight,
   ExternalLink,
+  CheckCircle,
 } from "lucide-react";
 import { loginSchema, type LoginFormValues } from "@/lib/schemas/login";
 import { supabase } from "@/lib/supabase";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isRegistered = searchParams.get("registered") === "true";
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -38,31 +44,55 @@ export function LoginForm() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    // Check if Supabase is properly configured
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL === "https://your-project.supabase.co"
-    ) {
-      setErrorMessage(
-        "Supabase belum dikonfigurasi. Silakan atur NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY di file .env.local"
-      );
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // 1. Sign in with Supabase Auth
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
       if (error) {
-        setErrorMessage(error.message);
+        if (error.message === "Invalid login credentials") {
+          setErrorMessage("Email atau password salah.");
+        } else if (error.message === "Email not confirmed") {
+          setErrorMessage(
+            "Email belum diverifikasi. Silakan cek inbox email Anda dan klik link verifikasi."
+          );
+        } else {
+          setErrorMessage(error.message);
+        }
         return;
       }
 
-      // Redirect to teacher dashboard on success
+      const accessToken = authData.session?.access_token;
+
+      if (!accessToken) {
+        setErrorMessage("Gagal mendapatkan token. Silakan coba lagi.");
+        return;
+      }
+
+      // 2. Ensure profile exists (fire-and-forget, don't block login)
+      // This creates the profile if it doesn't exist yet
+      try {
+        await fetch(`${API_URL}/auth/register`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            full_name:
+              authData.user?.user_metadata?.full_name ||
+              data.email.split("@")[0],
+          }),
+        });
+      } catch {
+        // Profile creation failed silently — user can still access dashboard
+        // The backend will handle this on subsequent requests
+        console.warn("Profile sync failed, continuing to dashboard");
+      }
+
+      // 3. Always redirect to dashboard after successful auth
       router.push("/guru/dashboard");
     } catch {
       setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
@@ -73,6 +103,17 @@ export function LoginForm() {
 
   return (
     <div className="w-full bg-white rounded-[12px] border border-[#C3C6D7] p-6 sm:p-10 shadow-sm">
+      {/* Registration Success Banner */}
+      {isRegistered && (
+        <div className="mb-4 p-3 bg-[#d6ffd7] rounded-[8px] flex items-start gap-2">
+          <CheckCircle className="w-5 h-5 text-[#15803d] shrink-0 mt-0.5" />
+          <p className="text-[13px] text-[#15803d]">
+            Registrasi berhasil! Silakan cek email Anda dan verifikasi akun
+            sebelum login.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-1 mb-6">
         <h2 className="text-[24px] font-bold text-[#191B23]">Welcome Back</h2>

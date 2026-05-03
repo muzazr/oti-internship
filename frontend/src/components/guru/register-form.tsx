@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import {
   User,
   Mail,
@@ -12,16 +11,17 @@ import {
   EyeOff,
   ArrowRight,
   LogIn,
+  CheckCircle,
 } from "lucide-react";
 import { registerSchema, type RegisterFormValues } from "@/lib/schemas/register";
 import { supabase } from "@/lib/supabase";
 
 export function RegisterForm() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     register,
@@ -42,21 +42,9 @@ export function RegisterForm() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    // Check if Supabase is properly configured
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL === "https://your-project.supabase.co"
-    ) {
-      setErrorMessage(
-        "Supabase belum dikonfigurasi. Silakan atur NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY di file .env.local"
-      );
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // 1. Create auth user in Supabase
+      // Create auth user in Supabase with metadata
+      // Profile row will be created on first login via POST /api/auth/register
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -65,6 +53,7 @@ export function RegisterForm() {
             full_name: data.fullName,
             role: "guru",
           },
+          emailRedirectTo: `${window.location.origin}/guru/login?registered=true`,
         },
       });
 
@@ -73,35 +62,52 @@ export function RegisterForm() {
         return;
       }
 
+      // Supabase returns a user even when email confirmation is pending,
+      // but the identities array will be empty if the email is already taken
+      // (Supabase doesn't reveal if an email exists for security)
       if (!authData.user) {
         setErrorMessage("Gagal membuat akun. Silakan coba lagi.");
         return;
       }
 
-      // 2. Create profile in profiles table
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          full_name: data.fullName,
-          role: "guru",
-        });
-
-      if (profileError) {
-        setErrorMessage(
-          "Akun berhasil dibuat, tetapi profil gagal disimpan. Silakan hubungi admin."
-        );
-        return;
-      }
-
-      // Redirect to login page with success message
-      router.push("/guru/login?registered=true");
+      // Show success message — user needs to confirm email before logging in
+      setIsSuccess(true);
     } catch {
       setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Success state — show email confirmation message
+  if (isSuccess) {
+    return (
+      <div className="w-full bg-white rounded-[12px] border border-[#C3C6D7] p-6 sm:p-10 shadow-sm">
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-[#d6ffd7] flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-[#15803d]" />
+          </div>
+          <h2 className="text-[24px] font-bold text-[#191B23]">
+            Registrasi Berhasil!
+          </h2>
+          <p className="text-[14px] font-medium text-[#434655] leading-relaxed">
+            Akun Anda telah berhasil dibuat. Silakan cek email Anda dan klik
+            link verifikasi untuk mengaktifkan akun.
+          </p>
+          <p className="text-[13px] text-[#737686]">
+            Setelah verifikasi, Anda dapat login ke dashboard guru.
+          </p>
+          <a
+            href="/guru/login?registered=true"
+            className="mt-2 w-full h-[48px] bg-[#004AC6] hover:bg-[#003EA8] rounded-[8px] flex items-center justify-center gap-2 text-[16px] font-medium text-white transition-colors"
+          >
+            Ke Halaman Login
+            <LogIn className="w-5 h-5" />
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-white rounded-[12px] border border-[#C3C6D7] p-6 sm:p-10 shadow-sm">

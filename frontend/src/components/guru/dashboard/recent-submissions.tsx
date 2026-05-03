@@ -16,7 +16,6 @@ interface RecentSubmissionsProps {
   submissions: Submission[];
 }
 
-// Deterministic color based on initials (matches Figma avatar colors)
 const avatarColors = ["#2563EB", "#9333EA", "#D97706", "#E11D48", "#059669"];
 
 function getAvatarColor(initials: string): string {
@@ -42,20 +41,20 @@ function getTimeAgo(dateStr: string): string {
 
 export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
   return (
-    <div className="bg-white rounded-xl border border-[#F9FAFB] shadow-[0_4px_4px_rgba(0,0,0,0.05)] p-6 w-[349px] flex-shrink-0">
+    <div className="flex w-full flex-shrink-0 flex-col rounded-xl border border-[#F9FAFB] bg-white p-6 shadow-[0_4px_4px_rgba(0,0,0,0.05)] xl:w-[349px]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="text-lg font-bold text-[#191B23]">Submisi Terbaru</h3>
+      <div className="mb-5 flex items-center justify-between">
+        <h3 className="text-xl font-bold text-[#191B23]">Submisi Terbaru</h3>
         <Link
           href="/guru/submissions"
-          className="text-xs font-medium text-[#003FA3] hover:underline"
+          className="text-xs font-bold text-[#003FA3] hover:underline"
         >
           Lihat Semua
         </Link>
       </div>
 
       {/* Submission List */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {submissions.map((sub) => {
           const timeAgo = getTimeAgo(sub.submitted_at);
           const isNew = timeAgo === "Baru";
@@ -64,11 +63,11 @@ export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
           return (
             <div
               key={sub.id}
-              className="flex items-center gap-3 bg-[#F3F3FE] rounded-xl p-4"
+              className="flex items-center gap-3 rounded-xl bg-[#F3F3FE] p-4"
             >
               {/* Avatar */}
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
                 style={{ backgroundColor: avatarColor }}
               >
                 <span className="text-xs font-bold text-white">
@@ -77,22 +76,22 @@ export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
               </div>
 
               {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#191B23] truncate">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-[#191B23]">
                   {sub.student_name}
                 </p>
-                <p className="text-xs text-[#565F6B] truncate">
+                <p className="truncate text-[10px] text-[#565F6B]">
                   {sub.subject_name} &bull; {sub.class_name}
                 </p>
               </div>
 
               {/* Time / Badge */}
               {isNew ? (
-                <span className="px-2 py-0.5 bg-[#F0FDF4] text-[#16A34A] text-xs font-medium rounded-full whitespace-nowrap">
+                <span className="whitespace-nowrap rounded-full bg-[#F0FDF4] px-2 py-0.5 text-[10px] font-bold text-[#16A34A]">
                   Baru
                 </span>
               ) : (
-                <span className="text-xs text-[#565F6B] whitespace-nowrap">
+                <span className="whitespace-nowrap text-[10px] font-medium text-[#565F6B]">
                   {timeAgo}
                 </span>
               )}
@@ -101,7 +100,7 @@ export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
         })}
 
         {submissions.length === 0 && (
-          <p className="text-sm text-[#8C8D91] text-center py-8">
+          <p className="py-8 text-center text-sm text-[#8C8D91]">
             Belum ada submisi terbaru
           </p>
         )}

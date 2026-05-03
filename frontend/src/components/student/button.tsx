@@ -3,7 +3,8 @@ import Link from "next/link"
 
 const variants = {
   default: "bg-primary-500 text-primary-1200",
-  hollow: "border border-primary-600 bg-primary-1200 text-primary-100",
+  hollow:
+    "border border-primary-600 bg-primary-1200 text-primary-100 hover:opacity-60!",
   send: "",
   error: "",
 }

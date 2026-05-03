@@ -55,6 +55,23 @@ export async function sendStudentInvite(
 }
 
 /**
+ * Send grade notification to a student via WhatsApp Bot.
+ */
+export async function sendGradeNotification(
+  phoneNumber: string,
+  studentName: string,
+  assignmentTitle: string,
+  score: number,
+  feedback: string | null
+): Promise<boolean> {
+  const feedbackText = feedback
+    ? `\n\nCatatan guru: ${feedback}`
+    : "";
+  const message = `Halo ${studentName}, nilai kamu untuk tugas "${assignmentTitle}" sudah keluar.\n\nNilai: ${score}/100${feedbackText}\n\nSilakan cek di MitBridge untuk detail lebih lanjut.`;
+  return sendWhatsAppMessage(phoneNumber, message);
+}
+
+/**
  * Send assignment notification to all students in a class.
  */
 export async function sendAssignmentNotification(

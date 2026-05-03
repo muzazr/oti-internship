@@ -60,63 +60,16 @@ async function ensureProfile(): Promise<string> {
   return userId;
 }
 
-// Extract subject name from class name pattern like "Matematika - X IPA 1"
-function extractSubjectFromClassName(className: string): string | null {
-  // Pattern: "Subject - Class" (e.g., "Matematika - X IPA 1")
-  const dashIndex = className.indexOf(" - ");
-  if (dashIndex > 0) {
-    return className.substring(0, dashIndex).trim();
-  }
-  return null;
-}
-
-// Fetch class info by ID (with subject name if available)
+// Fetch class info by ID (with subject name)
 export async function fetchClassById(classId: string): Promise<ClassInfo> {
   const { data, error } = await supabase
     .from("classes")
-    .select("*")
+    .select("*, subjects(id, name)")
     .eq("id", classId)
     .single();
 
   if (error) throw new Error(error.message);
-
-  const classData = data as ClassInfo;
-
-  // Try to get subject from subjects table (if subject_id exists on class)
-  if (classData.subject_id) {
-    const { data: subject } = await supabase
-      .from("subjects")
-      .select("id, name")
-      .eq("id", classData.subject_id)
-      .single();
-    if (subject) {
-      classData.subjects = subject;
-      return classData;
-    }
-  }
-
-  // Fallback: try to find subject from teacher's subjects
-  if (!classData.subjects) {
-    const { data: subjects } = await supabase
-      .from("subjects")
-      .select("id, name")
-      .eq("teacher_id", classData.teacher_id)
-      .limit(1);
-    if (subjects && subjects.length > 0) {
-      classData.subjects = subjects[0];
-      return classData;
-    }
-  }
-
-  // Final fallback: extract subject name from class name pattern
-  if (!classData.subjects) {
-    const extracted = extractSubjectFromClassName(classData.name);
-    if (extracted) {
-      classData.subjects = { id: "", name: extracted };
-    }
-  }
-
-  return classData;
+  return data as ClassInfo;
 }
 
 // Fetch teacher profile by ID

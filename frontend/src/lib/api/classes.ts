@@ -35,13 +35,10 @@ async function getSession() {
 }
 
 // Ensure the logged-in user has a profile row in the profiles table.
-// The classes.teacher_id FK references profiles(id), so a profile must exist
-// before we can insert a class.
 async function ensureProfile(): Promise<string> {
   const session = await getSession();
   const userId = session.user.id;
 
-  // Check if profile already exists
   const { data: existing } = await supabase
     .from("profiles")
     .select("id")
@@ -50,7 +47,6 @@ async function ensureProfile(): Promise<string> {
 
   if (existing) return userId;
 
-  // Profile doesn't exist — create it
   const fullName =
     session.user.user_metadata?.full_name ||
     session.user.email?.split("@")[0] ||
@@ -62,7 +58,6 @@ async function ensureProfile(): Promise<string> {
     role: "teacher",
   });
 
-  // Ignore duplicate key error (profile may have been created concurrently)
   if (error && !error.message.includes("duplicate")) {
     throw new Error(`Failed to create profile: ${error.message}`);
   }
@@ -77,7 +72,7 @@ export async function fetchClasses(): Promise<ClassData[]> {
 
   const { data, error } = await supabase
     .from("classes")
-    .select("*, students(count)")
+    .select("*, subjects(id, name), students(count)")
     .eq("teacher_id", teacherId)
     .order("created_at", { ascending: false });
 
@@ -104,7 +99,6 @@ export async function fetchSubjects(): Promise<SubjectData[]> {
 export async function createClass(
   payload: CreateClassPayload
 ): Promise<ClassData> {
-  // Ensure profile exists before inserting (FK constraint)
   const teacherId = await ensureProfile();
 
   const insertData: Record<string, unknown> = {
@@ -112,7 +106,6 @@ export async function createClass(
     teacher_id: teacherId,
   };
 
-  // Only include subject_id if provided (column may not exist yet)
   if (payload.subject_id) {
     insertData.subject_id = payload.subject_id;
   }
@@ -120,7 +113,7 @@ export async function createClass(
   const { data, error } = await supabase
     .from("classes")
     .insert(insertData)
-    .select("*, students(count)")
+    .select("*, subjects(id, name), students(count)")
     .single();
 
   if (error) throw new Error(error.message);
@@ -129,7 +122,6 @@ export async function createClass(
 
 // Create a new subject
 export async function createSubject(name: string): Promise<SubjectData> {
-  // Ensure profile exists before inserting (FK constraint on teacher_id)
   const teacherId = await ensureProfile();
 
   const { data, error } = await supabase
@@ -142,19 +134,39 @@ export async function createSubject(name: string): Promise<SubjectData> {
   return data as SubjectData;
 }
 
-// Delete a class
+// Delete a class — deletes related data first, then the class itself
 export async function deleteClass(classId: string): Promise<void> {
-  // Delete students in this class first (FK constraint)
+  const session = await getSession();
+  const teacherId = session.user.id;
+
+  // 1. Delete students in this class
   await supabase.from("students").delete().eq("class_id", classId);
 
-  // Delete assignment_classes references
+  // 2. Delete assignment_classes references
   await supabase.from("assignment_classes").delete().eq("class_id", classId);
 
-  // Delete the class itself
-  const { error } = await supabase
+  // 3. Delete the class — verify it actually got deleted
+  const { data, error } = await supabase
     .from("classes")
     .delete()
-    .eq("id", classId);
+    .eq("id", classId)
+    .eq("teacher_id", teacherId)
+    .select("id");
 
   if (error) throw new Error(error.message);
+
+  // If no rows were deleted, the class either doesn't exist or RLS blocked it
+  if (!data || data.length === 0) {
+    // Double-check: is the class still there?
+    const { data: stillExists } = await supabase
+      .from("classes")
+      .select("id")
+      .eq("id", classId)
+      .single();
+
+    if (stillExists) {
+      throw new Error("Gagal menghapus kelas. Coba lagi.");
+    }
+    // If it doesn't exist anymore, it was already deleted — that's fine
+  }
 }

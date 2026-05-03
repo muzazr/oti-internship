@@ -67,7 +67,10 @@ export default function ClassesPage() {
     queryClient.setQueryData<ClassData[]>(["classes"], (old) =>
       old ? old.filter((c) => c.id !== deletedId) : []
     );
-  }, [deleteTarget, queryClient]);
+
+    // 3. Refetch from server to confirm deletion persisted
+    refetch();
+  }, [deleteTarget, queryClient, refetch]);
 
   const handleDetail = (classId: string) => {
     router.push(`/guru/classes/${classId}`);

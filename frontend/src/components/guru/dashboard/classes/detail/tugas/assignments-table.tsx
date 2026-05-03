@@ -7,6 +7,7 @@ interface AssignmentsTableProps {
   assignments: Assignment[];
   totalStudents: number;
   submissionCounts: Record<string, number>;
+  onEdit: (assignment: Assignment) => void;
   onDelete: (assignmentId: string) => void;
 }
 
@@ -31,6 +32,7 @@ export function AssignmentsTable({
   assignments,
   totalStudents,
   submissionCounts,
+  onEdit,
   onDelete,
 }: AssignmentsTableProps) {
   return (
@@ -118,7 +120,10 @@ export function AssignmentsTable({
                 {/* Actions */}
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-2">
-                    <button className="p-1 text-[#94A3B8] hover:text-[#2563EB] transition-colors cursor-pointer">
+                    <button
+                      onClick={() => onEdit(assignment)}
+                      className="p-1 text-[#94A3B8] hover:text-[#2563EB] transition-colors cursor-pointer"
+                    >
                       <Pencil className="w-5 h-5" />
                     </button>
                     <button

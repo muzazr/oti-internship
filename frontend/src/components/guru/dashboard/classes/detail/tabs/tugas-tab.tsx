@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+
 import { AssignmentCard } from "../tugas/assignment-card";
 import { AssignmentsTable } from "../tugas/assignments-table";
 import { FabButton } from "../tugas/fab-button";
 import { CreateAssignmentModal } from "../tugas/create-assignment-modal";
+import { EditAssignmentModal } from "../tugas/edit-assignment-modal";
+import { DeleteAssignmentDialog } from "../tugas/delete-assignment-dialog";
 import { ResultAlert } from "../result-alert";
-import {
-  type Assignment,
-  deleteAssignment,
-  getSubmissionCount,
-} from "@/lib/api/assignments";
+import { type Assignment, getSubmissionCount } from "@/lib/api/assignments";
 import type { Student } from "@/lib/api/class-detail";
 
 interface TugasTabProps {
@@ -35,8 +34,9 @@ export function TugasTab({
   assignments,
   students,
 }: TugasTabProps) {
-  const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editTarget, setEditTarget] = useState<Assignment | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [alert, setAlert] = useState<AlertState>(null);
   const [submissionCounts, setSubmissionCounts] = useState<
     Record<string, number>
@@ -53,16 +53,6 @@ export function TugasTab({
     }
     if (assignments.length > 0) loadCounts();
   }, [assignments]);
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteAssignment,
-    onSuccess: (_data, deletedId) => {
-      queryClient.setQueryData<Assignment[]>(
-        ["assignments", classId],
-        (old) => (old ? old.filter((a) => a.id !== deletedId) : [])
-      );
-    },
-  });
 
   const totalStudents = students.length;
 
@@ -88,7 +78,8 @@ export function TugasTab({
         assignments={assignments}
         totalStudents={totalStudents}
         submissionCounts={submissionCounts}
-        onDelete={(id) => deleteMutation.mutate(id)}
+        onEdit={(assignment) => setEditTarget(assignment)}
+        onDelete={(id) => setDeleteTargetId(id)}
       />
 
       {/* FAB Button */}
@@ -107,7 +98,7 @@ export function TugasTab({
               variant: "success",
               title: "Tugas berhasil dibuat",
               description:
-                "Bot WA akan mengirim notifikasi tugas ke semua siswa di kelas ini",
+                "Tugas baru telah ditambahkan ke kelas ini",
             })
           }
           onError={() =>
@@ -117,6 +108,26 @@ export function TugasTab({
               description: "Coba lagi. Periksa koneksi anda.",
             })
           }
+        />
+      )}
+
+      {/* Edit Assignment Modal */}
+      {editTarget && (
+        <EditAssignmentModal
+          classId={classId}
+          className={className}
+          subjectName={subjectName}
+          assignment={editTarget}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
+
+      {/* Delete Assignment Dialog */}
+      {deleteTargetId && (
+        <DeleteAssignmentDialog
+          classId={classId}
+          assignmentId={deleteTargetId}
+          onClose={() => setDeleteTargetId(null)}
         />
       )}
 

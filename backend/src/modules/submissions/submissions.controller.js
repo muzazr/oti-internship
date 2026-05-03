@@ -4,6 +4,20 @@ import * as uploadLinksService from "../upload-links/uploadLinks.service.js"
 import { asyncHandler } from "../../shared/utils/asyncHandler.js"
 import { successResponse } from "../../shared/utils/response.js"
 import { AppError } from "../../shared/utils/AppError.js"
+import { supabaseAdmin } from "../../config/supabase.js"
+
+// GET /api/submissions?assignment_id=<uuid>
+export const listSubmissions = asyncHandler(async (req, res) => {
+    const { assignment_id } = req.query
+
+    if (!assignment_id) {
+        throw new AppError("assignment_id query parameter is required", 400)
+    }
+
+    const submissions = await submissionsService.findByAssignment(assignment_id)
+
+    return successResponse(res, "Submissions retrieved successfully", submissions)
+})
 
 // POST /api/submissions/:token
 export const submitAssignment = asyncHandler(async (req, res) => {
@@ -111,6 +125,25 @@ export const submitAssignment = asyncHandler(async (req, res) => {
 
     // mark upload link as used
     await uploadLinksService.markUsed(link.id)
+
+    // Create notification for the teacher (non-blocking)
+    try {
+        if (assignment.teacher_id && supabaseAdmin) {
+            await supabaseAdmin.from("notifications").insert({
+                user_id: assignment.teacher_id,
+                title: `New submission for ${assignment.title || "assignment"}`,
+                type: "submission",
+                metadata: {
+                    assignment_id: link.assignment_id,
+                    student_id: link.student_id,
+                    submission_id: submission.id,
+                },
+            })
+        }
+    } catch (notifError) {
+        // Don't block submission on notification failure
+        console.warn("Failed to create submission notification:", notifError.message)
+    }
 
     return successResponse(res, "Submission uploaded successfully", { id: submission.id }, 201)
 })

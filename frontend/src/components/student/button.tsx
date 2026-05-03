@@ -12,6 +12,7 @@ interface Props {
   children: React.ReactNode
   variant?: "default" | "hollow" | "send" | "error"
   link?: string
+  className?: string
 }
 
 function handleVariants(variant: string) {
@@ -22,17 +23,17 @@ function handleVariants(variant: string) {
   }
 }
 
-const Button = ({ children, variant = "default", link = "" }: Props) => {
+const Button = ({ children, variant = "default", link = "", className = "" }: Props) => {
   return link === "" ? (
     <button
-      className={`p-4 transition-all font-bold flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)}`}
+      className={`p-4 transition-all font-bold flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)} ${className}`}
     >
       {children}
     </button>
   ) : (
     <Link
       href={link}
-      className={`p-4 transition-all flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)}`}
+      className={`p-4 transition-all flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)} ${className}`}
     >
       {children}
     </Link>

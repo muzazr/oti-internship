@@ -97,7 +97,7 @@ export function StatsCards({
         return (
           <div
             key={card.label}
-            className="flex h-[140px] items-start justify-between rounded-xl border border-[#F9FAFB] bg-white p-4 shadow-[0_4px_4px_rgba(0,0,0,0.05)]"
+            className="flex min-h-[140px] items-start justify-between rounded-xl border border-[#F9FAFB] bg-white p-4 shadow-[0_4px_4px_rgba(0,0,0,0.05)]"
           >
             {/* Left content */}
             <div className="flex h-full flex-col justify-between">

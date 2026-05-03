@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { createNotification } from "@/lib/api/notifications";
 
 // Types
 export interface Assignment {
@@ -140,7 +141,44 @@ export async function createAssignment(
     if (linkError) throw new Error(linkError.message);
   }
 
+  // Create notification for assignment creation
+  createNotification(
+    teacherId,
+    `Tugas baru "${payload.title}" berhasil dibuat`,
+    "assignment",
+    { assignment_id: assignment.id, title: payload.title }
+  );
+
   return assignment as Assignment;
+}
+
+// Update an existing assignment
+export async function updateAssignment(
+  assignmentId: string,
+  payload: Partial<CreateAssignmentPayload>
+): Promise<Assignment> {
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (payload.title !== undefined) updateData.title = payload.title;
+  if (payload.description !== undefined)
+    updateData.description = payload.description || null;
+  if (payload.attachment_url !== undefined)
+    updateData.attachment_url = payload.attachment_url || null;
+  if (payload.start_date !== undefined)
+    updateData.start_date = payload.start_date || null;
+  if (payload.deadline !== undefined)
+    updateData.deadline = payload.deadline || null;
+
+  const { data, error } = await supabase
+    .from("assignments")
+    .update(updateData)
+    .eq("id", assignmentId)
+    .select("*, subjects(name)")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as Assignment;
 }
 
 // Delete an assignment

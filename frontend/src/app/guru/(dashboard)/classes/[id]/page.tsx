@@ -14,7 +14,6 @@ import {
   type Student,
 } from "@/lib/api/class-detail";
 import { fetchAssignmentsByClass, type Assignment } from "@/lib/api/assignments";
-import { fetchSubjects, type SubjectData } from "@/lib/api/classes";
 import { TugasTab } from "@/components/guru/dashboard/classes/detail/tabs/tugas-tab";
 import { PeopleTab } from "@/components/guru/dashboard/classes/detail/tabs/people-tab";
 
@@ -70,26 +69,8 @@ export default function ClassDetailPage() {
     enabled: isAuthChecked,
   });
 
-  // Fetch teacher's subjects (to resolve subject name)
-  const { data: subjects = [] } = useQuery<SubjectData[]>({
-    queryKey: ["subjects"],
-    queryFn: fetchSubjects,
-    enabled: isAuthChecked,
-  });
-
-  // Resolve subject name: from class.subjects → from subjects table → from class name
-  const resolvedSubjectName = (() => {
-    // 1. From class info (if subject_id was linked)
-    if (classInfo?.subjects?.name) return classInfo.subjects.name;
-    // 2. From teacher's subjects table (first match)
-    if (subjects.length > 0) return subjects[0].name;
-    // 3. Extract from class name pattern "Subject - ClassName"
-    const name = classInfo?.name || "";
-    const dashIdx = name.indexOf(" - ");
-    if (dashIdx > 0) return name.substring(0, dashIdx).trim();
-    // 4. No subject found
-    return null;
-  })();
+  // Subject name from class info (linked via subject_id FK)
+  const subjectName = classInfo?.subjects?.name || undefined;
 
   if (!isAuthChecked) {
     return (
@@ -149,7 +130,7 @@ export default function ClassDetailPage() {
         <TugasTab
           classId={classId}
           className={classInfo?.name || ""}
-          subjectName={resolvedSubjectName || undefined}
+          subjectName={subjectName}
           assignments={assignments}
           students={students}
         />

@@ -1,7 +1,9 @@
 import React from "react"
 
-let lrVariant = []
-let udVariant = []
+// eslint-disable-next-line prefer-const, @typescript-eslint/no-unused-vars
+let lrVariant: string[] = []
+// eslint-disable-next-line prefer-const, @typescript-eslint/no-unused-vars
+let udVariant: string[] = []
 
 const Table = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -26,9 +28,15 @@ export const LeftRight = ({ info, content }: itemProps) => {
   )
 }
 
-// For
+// For up-down layout
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const UpDown = ({ info, content }: itemProps) => {
-  // Summary
+  return (
+    <div className="flex flex-col w-full">
+      <p className="text-neutral-700">{info}</p>
+      <p className="font-medium">{content}</p>
+    </div>
+  )
 }
 
 export default Table

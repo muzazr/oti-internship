@@ -41,7 +41,7 @@ function getTimeAgo(dateStr: string): string {
 
 export function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
   return (
-    <div className="flex w-full flex-shrink-0 flex-col rounded-xl border border-[#F9FAFB] bg-white p-6 shadow-[0_4px_4px_rgba(0,0,0,0.05)] xl:w-[349px]">
+    <div className="flex w-full flex-shrink-0 flex-col rounded-xl border border-[#F9FAFB] bg-white p-4 shadow-[0_4px_4px_rgba(0,0,0,0.05)] sm:p-6 xl:w-[349px]">
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-xl font-bold text-[#191B23]">Submisi Terbaru</h3>

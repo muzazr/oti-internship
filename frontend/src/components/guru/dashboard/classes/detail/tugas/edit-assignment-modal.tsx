@@ -3,79 +3,62 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Loader2, Calendar } from "lucide-react";
-import {
-  createAssignment,
-  type Assignment,
-  type CreateAssignmentPayload,
-} from "@/lib/api/assignments";
-import { sendAssignmentNotification } from "@/lib/api/whatsapp";
-import type { Student } from "@/lib/api/class-detail";
+import { updateAssignment, type Assignment } from "@/lib/api/assignments";
 
-interface CreateAssignmentModalProps {
+interface EditAssignmentModalProps {
   classId: string;
   className: string;
   subjectName?: string;
-  students: Student[];
+  assignment: Assignment;
   onClose: () => void;
-  onSuccess: () => void;
-  onError: () => void;
 }
 
-export function CreateAssignmentModal({
+function toDateInputValue(isoStr: string | null): string {
+  if (!isoStr) return "";
+  return new Date(isoStr).toISOString().split("T")[0];
+}
+
+export function EditAssignmentModal({
   classId,
   className,
   subjectName,
-  students,
+  assignment,
   onClose,
-  onSuccess,
-  onError,
-}: CreateAssignmentModalProps) {
+}: EditAssignmentModalProps) {
   const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [attachmentUrl, setAttachmentUrl] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [sendWaNotification, setSendWaNotification] = useState(false);
+  const [title, setTitle] = useState(assignment.title);
+  const [description, setDescription] = useState(assignment.description || "");
+  const [attachmentUrl, setAttachmentUrl] = useState(
+    assignment.attachment_url || ""
+  );
+  const [startDate, setStartDate] = useState(
+    toDateInputValue(assignment.start_date)
+  );
+  const [deadline, setDeadline] = useState(
+    toDateInputValue(assignment.deadline)
+  );
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const payload: CreateAssignmentPayload = {
+      return updateAssignment(assignment.id, {
         title,
         description: description || undefined,
         attachment_url: attachmentUrl || undefined,
         start_date: startDate ? new Date(startDate).toISOString() : undefined,
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
-        class_ids: [classId],
-        send_wa_notification: sendWaNotification,
-      };
-
-      const assignment = await createAssignment(payload);
-
-      // Send WA notification to all students if checkbox is checked
-      if (sendWaNotification) {
-        await sendAssignmentNotification(
-          students,
-          title,
-          className,
-          deadline ? new Date(deadline).toISOString() : null
-        );
-      }
-
-      return assignment;
+      });
     },
-    onSuccess: (newAssignment) => {
+    onSuccess: (updatedAssignment) => {
       queryClient.setQueryData<Assignment[]>(
         ["assignments", classId],
-        (old) => (old ? [newAssignment, ...old] : [newAssignment])
+        (old) =>
+          old
+            ? old.map((a) =>
+                a.id === updatedAssignment.id ? updatedAssignment : a
+              )
+            : []
       );
       onClose();
-      onSuccess();
-    },
-    onError: (err) => {
-      console.error("[CreateAssignment] Error:", err);
-      onClose();
-      onError();
     },
   });
 
@@ -98,9 +81,7 @@ export function CreateAssignmentModal({
       <div className="w-[1001px] bg-white rounded-3xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-5 border-b border-[#F1F5F9]">
-          <h2 className="text-2xl font-bold text-[#191B23]">
-            Buat Tugas Baru
-          </h2>
+          <h2 className="text-2xl font-bold text-[#191B23]">Edit Tugas</h2>
           <button
             onClick={onClose}
             className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer"
@@ -164,7 +145,7 @@ export function CreateAssignmentModal({
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="h-12 w-full px-3 pr-10 bg-[#F3F3FE] border border-[#C3C6D7] rounded-lg text-sm text-[#191B23] placeholder:text-[#7F7F7F] outline-none focus:border-[#003FA3] transition-colors"
+                    className="h-12 w-full px-3 pr-10 bg-[#F3F3FE] border border-[#C3C6D7] rounded-lg text-sm text-[#191B23] outline-none focus:border-[#003FA3] transition-colors"
                   />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8] pointer-events-none" />
                 </div>
@@ -176,7 +157,7 @@ export function CreateAssignmentModal({
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
-                    className="h-12 w-full px-3 pr-10 bg-[#F3F3FE] border border-[#C3C6D7] rounded-lg text-sm text-[#191B23] placeholder:text-[#7F7F7F] outline-none focus:border-[#003FA3] transition-colors"
+                    className="h-12 w-full px-3 pr-10 bg-[#F3F3FE] border border-[#C3C6D7] rounded-lg text-sm text-[#191B23] outline-none focus:border-[#003FA3] transition-colors"
                   />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8] pointer-events-none" />
                 </div>
@@ -197,43 +178,24 @@ export function CreateAssignmentModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-8 py-5 bg-[#F8FAFC]">
-          {/* Checkbox */}
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sendWaNotification}
-              onChange={(e) => setSendWaNotification(e.target.checked)}
-              className="w-5 h-5 rounded border-[#C3C6D7] accent-[#003FA3]"
-            />
-            <span className="text-sm text-[#424654]">
-              Kirim notifikasi ke semua murid dalam kelas ini menggunakan bot
-              WhatsApp
-            </span>
-          </label>
-
-          {/* Buttons */}
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={mutation.isPending}
-              className="px-8 py-3 border border-black rounded-xl text-base text-[#424654] hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              onClick={() => mutation.mutate()}
-              disabled={mutation.isPending || !title.trim()}
-              className="px-8 py-3 bg-[#003FA3] rounded-xl text-base text-white hover:bg-[#003080] transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-2"
-            >
-              {mutation.isPending && (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              )}
-              Kirim
-            </button>
-          </div>
+        <div className="flex items-center justify-end px-8 py-5 bg-[#F8FAFC] gap-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={mutation.isPending}
+            className="px-8 py-3 border border-black rounded-xl text-base text-[#424654] hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending || !title.trim()}
+            className="px-8 py-3 bg-[#003FA3] rounded-xl text-base text-white hover:bg-[#003080] transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-2"
+          >
+            {mutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Kirim
+          </button>
         </div>
       </div>
     </div>

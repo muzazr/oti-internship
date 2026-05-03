@@ -46,6 +46,20 @@ export async function insertSubmittedLinks(links) {
     return data
 }
 
+export async function findByAssignment(assignmentId) {
+    const { data, error } = await supabaseAdmin
+        .from("submissions")
+        .select(`
+            *,
+            students(id, full_name, student_code, whatsapp_number)
+        `)
+        .eq("assignment_id", assignmentId)
+        .order("submitted_at", { ascending: true })
+
+    if (error) throw error
+    return data
+}
+
 export async function findById(id) {
     const { data, error } = await supabaseAdmin
         .from("submissions")

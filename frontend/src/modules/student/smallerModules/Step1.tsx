@@ -1,9 +1,9 @@
 import React from "react"
 import Image from "next/image"
 import Table, { UpDown } from "@/components/student/tableThingy"
-import Progress from "@/components/student/progress"
+
 import Button from "@/components/student/button"
-import { ArrowLeft, User, Info, ArrowUpRight, ArrowRight } from "lucide-react"
+import { User, Info, ArrowUpRight, ArrowRight } from "lucide-react"
 
 // vEdit these for backend fetching
 const name = "Maria Taek"
@@ -66,36 +66,13 @@ function numberToWhatsAppLink(phoneNumber: string) {
 }
 
 interface Props {
-  progress: number
-  next?: () => void
-  prev?: () => void
-  stepsAmount: number
+  onClick: () => void
 }
 
-const Page = ({ progress, next, prev, stepsAmount }: Props) => {
+const Page = ({ onClick }: Props) => {
   const contactLink = numberToWhatsAppLink(teacherNumber)
   return (
     <>
-      <Button
-        className="rounded-full w-fit!"
-        link={progress === 0 ? "./" : ""}
-        onClick={() => {
-          if (prev !== undefined) prev()
-        }}
-      >
-        <ArrowLeft className="size-4.5" /> Kembali
-      </Button>
-      <div>
-        <p className="text-foreground-secondary font-bold text-xs">
-          Langkah {progress + 1} dari {stepsAmount}
-        </p>
-        <Progress
-          className="w-full mt-2 h-2 bg-neutral-300"
-          progressColor="var(--primary-500)"
-          value={progress + 1}
-          max={stepsAmount}
-        />
-      </div>
       <div>
         <h1 className="font-bold text-2xl">Konfirmasi Datamu</h1>
         <p className="text-foreground-secondary">
@@ -127,11 +104,7 @@ const Page = ({ progress, next, prev, stepsAmount }: Props) => {
             Hubungi Guru <ArrowUpRight className="size-5 stroke-primary-500" />
           </Button>
         )}
-        <Button
-          onClick={() => {
-            if (next !== undefined) next()
-          }}
-        >
+        <Button onClick={() => onClick()}>
           Lanjut <ArrowRight className="size-4" />
         </Button>
       </div>

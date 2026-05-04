@@ -62,6 +62,7 @@
   --color-error-100: var(--error-100);
   --color-error-200: var(--error-200);
   --color-error-300: var(--error-300);
+  --color-error-400: var(--error-400);
 
   --color-success-100: var(--success-100);
   --color-success-200: var(--success-200);
@@ -121,6 +122,7 @@
   --error-100: #93000a;
   --error-200: #ba1a1a;
   --error-300: #ffdad6;
+  --error-400: #fff8f7;
 
   --success-100: #15803d;
   --success-200: #d6ffd7;

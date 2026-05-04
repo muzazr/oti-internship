@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import {
+  fetchAnalyticsData,
+  type AnalyticsData,
+} from "@/lib/api/analytics";
 import { AnalyticsStatsCards } from "@/components/guru/dashboard/analytics/analytics-stats-cards";
 import { ParticipationBarChart } from "@/components/guru/dashboard/analytics/participation-bar-chart";
 import { SubmissionPieChart } from "@/components/guru/dashboard/analytics/submission-pie-chart";
@@ -15,94 +21,6 @@ import {
   type StudentRecapExport,
   type ParticipationExport,
 } from "@/lib/export-utils";
-
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-
-const mockClasses = [
-  { id: "all", name: "Semua Kelas" },
-  { id: "class-1", name: "Kelas X IPA 1" },
-  { id: "class-2", name: "Kelas X IPA 2" },
-  { id: "class-3", name: "Kelas X IPA 3" },
-];
-
-const mockAssignmentFilters = [
-  { id: "all", title: "Semua Tugas" },
-  { id: "asg-1", title: "Tugas Matematika Bab 1" },
-  { id: "asg-2", title: "Aljabar Linier Fundamental" },
-  { id: "asg-3", title: "HAMAAAAAA" },
-  { id: "asg-4", title: "Integral dan Persamaan Diferensial" },
-  { id: "asg-5", title: "Logika Informatika" },
-];
-
-const mockStudents = [
-  { id: "s1", name: "Gradien UHUY", avgScore: 85.2, submitted: 5, late: 1, notSubmitted: 0 },
-  { id: "s2", name: "Azhar turu", avgScore: 72.0, submitted: 4, late: 2, notSubmitted: 1 },
-  { id: "s3", name: "Ruchita Rajin", avgScore: 91.5, submitted: 6, late: 0, notSubmitted: 0 },
-  { id: "s4", name: "hoho", avgScore: 68.3, submitted: 3, late: 1, notSubmitted: 2 },
-  { id: "s5", name: "EYANTO", avgScore: 55.0, submitted: 2, late: 1, notSubmitted: 3 },
-  { id: "s6", name: "HAMAAA", avgScore: 88.7, submitted: 5, late: 1, notSubmitted: 0 },
-  { id: "s7", name: "Galih", avgScore: 79.4, submitted: 4, late: 2, notSubmitted: 0 },
-  { id: "s8", name: "GYOZZAH", avgScore: 94.2, submitted: 6, late: 0, notSubmitted: 0 },
-  { id: "s9", name: "Irfan Hakim", avgScore: 62.8, submitted: 3, late: 2, notSubmitted: 1 },
-  { id: "s10", name: "RAFI AHMAD", avgScore: 76.5, submitted: 4, late: 1, notSubmitted: 1 },
-  { id: "s11", name: "Kevin", avgScore: 83.1, submitted: 5, late: 0, notSubmitted: 1 },
-  { id: "s12", name: "ZHAFIRAH", avgScore: 70.9, submitted: 4, late: 2, notSubmitted: 0 },
-];
-
-const mockParticipation = [
-  { assignment: "Tugas Matematika Bab 1", sudah: 20, terlambat: 4, belum: 3 },
-  { assignment: "Aljabar Linier Fundamental", sudah: 18, terlambat: 5, belum: 4 },
-  { assignment: "HAMAAAAAA", sudah: 22, terlambat: 3, belum: 2 },
-  { assignment: "Integral dan Persamaan Diferensial", sudah: 15, terlambat: 6, belum: 6 },
-  { assignment: "Logika Informatika", sudah: 24, terlambat: 2, belum: 1 },
-];
-
-// Per-class mock data variants
-const mockDataByClass: Record<
-  string,
-  {
-    students: typeof mockStudents;
-    participation: typeof mockParticipation;
-  }
-> = {
-  all: { students: mockStudents, participation: mockParticipation },
-  "class-1": {
-    students: mockStudents.slice(0, 8).map((s) => ({
-      ...s,
-      avgScore: s.avgScore + 2,
-      submitted: Math.min(s.submitted + 1, 6),
-    })),
-    participation: mockParticipation.map((p) => ({
-      ...p,
-      sudah: p.sudah + 2,
-      belum: Math.max(p.belum - 1, 0),
-    })),
-  },
-  "class-2": {
-    students: mockStudents.slice(3, 10).map((s) => ({
-      ...s,
-      avgScore: Math.max(s.avgScore - 3, 40),
-    })),
-    participation: mockParticipation.map((p) => ({
-      ...p,
-      sudah: Math.max(p.sudah - 3, 5),
-      terlambat: p.terlambat + 2,
-    })),
-  },
-  "class-3": {
-    students: mockStudents.slice(5, 12).map((s) => ({
-      ...s,
-      avgScore: s.avgScore + 5,
-      late: Math.max(s.late - 1, 0),
-    })),
-    participation: mockParticipation.map((p) => ({
-      ...p,
-      sudah: p.sudah + 4,
-      terlambat: Math.max(p.terlambat - 2, 0),
-      belum: Math.max(p.belum - 1, 0),
-    })),
-  },
-};
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -119,72 +37,162 @@ function getStudentStatus(student: {
 // ─── Page Component ──────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
+    null
+  );
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedAssignment, setSelectedAssignment] = useState("all");
+  const [error, setError] = useState<string | null>(null);
 
-  // Get data based on selected class
-  const currentData = useMemo(() => {
-    return mockDataByClass[selectedClass] || mockDataByClass["all"];
-  }, [selectedClass]);
+  // ─── Initial load + auth check ─────────────────────────────────────────
 
-  // Compute stats
-  const stats = useMemo(() => {
-    const students = currentData.students;
-    const totalStudents = students.length;
-    const averageScore =
-      totalStudents > 0
-        ? students.reduce((sum, s) => sum + s.avgScore, 0) / totalStudents
-        : 0;
-    const submitted = students.reduce((sum, s) => sum + s.submitted, 0);
-    const late = students.reduce((sum, s) => sum + s.late, 0);
-    const notSubmitted = students.reduce((sum, s) => sum + s.notSubmitted, 0);
+  useEffect(() => {
+    async function init() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    return { averageScore, submitted, late, notSubmitted, totalStudents };
-  }, [currentData]);
+      if (!session) {
+        router.push("/guru/login");
+        return;
+      }
 
-  // Get class name for display
+      try {
+        const data = await fetchAnalyticsData("all", "all");
+        setAnalyticsData(data);
+      } catch (err) {
+        console.error("Failed to load analytics:", err);
+        setError("Gagal memuat data analisis. Silakan coba lagi.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    init();
+  }, [router]);
+
+  // ─── Refetch when filters change ───────────────────────────────────────
+
+  useEffect(() => {
+    // Skip the initial load (handled above)
+    if (isLoading) return;
+
+    async function refetch() {
+      setIsRefetching(true);
+      setError(null);
+
+      try {
+        const data = await fetchAnalyticsData(
+          selectedClass,
+          selectedAssignment
+        );
+        setAnalyticsData(data);
+      } catch (err) {
+        console.error("Failed to refetch analytics:", err);
+        setError("Gagal memuat data analisis. Silakan coba lagi.");
+      } finally {
+        setIsRefetching(false);
+      }
+    }
+
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClass, selectedAssignment]);
+
+  // ─── Reset assignment filter when class changes ────────────────────────
+
+  const handleClassChange = useCallback((classId: string) => {
+    setSelectedClass(classId);
+    setSelectedAssignment("all");
+  }, []);
+
+  // ─── Derived values ────────────────────────────────────────────────────
+
   const selectedClassName = useMemo(() => {
-    return mockClasses.find((c) => c.id === selectedClass)?.name || "Semua Kelas";
-  }, [selectedClass]);
+    if (selectedClass === "all") return "Semua Kelas";
+    return (
+      analyticsData?.classes.find((c) => c.id === selectedClass)?.name ||
+      "Semua Kelas"
+    );
+  }, [selectedClass, analyticsData]);
 
-  // ─── Export Handlers ─────────────────────────────────────────────────────
+  // ─── Export Handlers ───────────────────────────────────────────────────
 
   const handleExportCSV = useCallback(() => {
-    const exportData: StudentRecapExport[] = currentData.students.map((s) => ({
-      name: s.name,
-      avgScore: s.avgScore,
-      submitted: s.submitted,
-      late: s.late,
-      notSubmitted: s.notSubmitted,
-      status: getStudentStatus(s),
-    }));
+    if (!analyticsData) return;
+    const exportData: StudentRecapExport[] = analyticsData.students.map(
+      (s) => ({
+        name: s.name,
+        avgScore: s.avgScore,
+        submitted: s.submitted,
+        late: s.late,
+        notSubmitted: s.notSubmitted,
+        status: getStudentStatus(s),
+      })
+    );
     exportToCSV(exportData, selectedClassName);
-  }, [currentData, selectedClassName]);
+  }, [analyticsData, selectedClassName]);
 
   const handleExportExcel = useCallback(() => {
-    const studentExport: StudentRecapExport[] = currentData.students.map((s) => ({
-      name: s.name,
-      avgScore: s.avgScore,
-      submitted: s.submitted,
-      late: s.late,
-      notSubmitted: s.notSubmitted,
-      status: getStudentStatus(s),
-    }));
+    if (!analyticsData) return;
+    const studentExport: StudentRecapExport[] = analyticsData.students.map(
+      (s) => ({
+        name: s.name,
+        avgScore: s.avgScore,
+        submitted: s.submitted,
+        late: s.late,
+        notSubmitted: s.notSubmitted,
+        status: getStudentStatus(s),
+      })
+    );
     const participationExport: ParticipationExport[] =
-      currentData.participation.map((p) => ({
+      analyticsData.participation.map((p) => ({
         assignment: p.assignment,
         sudah: p.sudah,
         terlambat: p.terlambat,
         belum: p.belum,
       }));
     exportToExcel(studentExport, participationExport, selectedClassName);
-  }, [currentData, selectedClassName]);
+  }, [analyticsData, selectedClassName]);
 
   const handleExportImage = useCallback(() => {
     exportToImage("analytics-charts-section", selectedClassName);
   }, [selectedClassName]);
 
-  // ─── Render ──────────────────────────────────────────────────────────────
+  // ─── Loading State ─────────────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="animate-pulse text-base text-[#434655]">
+          Memuat analisis...
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Error State ───────────────────────────────────────────────────────
+
+  if (error && !analyticsData) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3">
+        <p className="text-sm text-[#E11D48]">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="rounded-lg bg-[#2563EB] px-4 py-2 text-sm font-medium text-white hover:bg-[#1D4ED8]"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    );
+  }
+
+  const data = analyticsData!;
+
+  // ─── Render ────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col gap-5 sm:gap-6">
@@ -194,7 +202,7 @@ export default function AnalyticsPage() {
           Analisis & Laporan
         </h1>
         <p className="text-sm text-[#565F6B] sm:text-base">
-          Analisis perkembangan akademik siswa secara menyeluruh berdasarkan data pengumpulan tugas, nilai rata-rata, dan pola keterlambatan. Gunakan filter untuk melihat data per kelas atau tugas tertentu, serta manfaatkan fitur ekspor untuk laporan yang lebih mendalam.
+          Pantau perkembangan akademik siswa secara detail
         </p>
       </div>
 
@@ -205,10 +213,12 @@ export default function AnalyticsPage() {
           <div className="relative">
             <select
               value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-[#191B23] outline-none transition-colors focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] sm:w-[180px]"
+              onChange={(e) => handleClassChange(e.target.value)}
+              disabled={isRefetching}
+              className="w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-[#191B23] outline-none transition-colors focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] disabled:opacity-50 sm:w-[180px]"
             >
-              {mockClasses.map((cls) => (
+              <option value="all">Semua Kelas</option>
+              {data.classes.map((cls) => (
                 <option key={cls.id} value={cls.id}>
                   {cls.name}
                 </option>
@@ -222,9 +232,11 @@ export default function AnalyticsPage() {
             <select
               value={selectedAssignment}
               onChange={(e) => setSelectedAssignment(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-[#191B23] outline-none transition-colors focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] sm:w-[220px]"
+              disabled={isRefetching}
+              className="w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white py-2.5 pl-3 pr-9 text-sm font-medium text-[#191B23] outline-none transition-colors focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] disabled:opacity-50 sm:w-[220px]"
             >
-              {mockAssignmentFilters.map((asg) => (
+              <option value="all">Semua Tugas</option>
+              {data.assignments.map((asg) => (
                 <option key={asg.id} value={asg.id}>
                   {asg.title}
                 </option>
@@ -232,6 +244,13 @@ export default function AnalyticsPage() {
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
           </div>
+
+          {/* Refetching indicator */}
+          {isRefetching && (
+            <span className="text-xs text-[#8C8D91] animate-pulse">
+              Memuat...
+            </span>
+          )}
         </div>
 
         {/* Export Button */}
@@ -242,33 +261,62 @@ export default function AnalyticsPage() {
         />
       </div>
 
-      {/* Stats Cards */}
-      <AnalyticsStatsCards
-        averageScore={stats.averageScore}
-        submitted={stats.submitted}
-        late={stats.late}
-        notSubmitted={stats.notSubmitted}
-        totalStudents={stats.totalStudents}
-      />
+      {/* Empty State: No classes */}
+      {data.classes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-[#F9FAFB] bg-white py-16 shadow-[0_4px_4px_rgba(0,0,0,0.05)]">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#EFF6FF]">
+            <svg
+              className="h-7 w-7 text-[#2563EB]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+              />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-[#191B23]">
+            Belum ada kelas
+          </p>
+          <p className="mt-1 text-xs text-[#8C8D91]">
+            Buat kelas terlebih dahulu di halaman Classes untuk melihat analisis.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Stats Cards */}
+          <AnalyticsStatsCards
+            averageScore={data.stats.averageScore}
+            submitted={data.stats.submitted}
+            late={data.stats.late}
+            notSubmitted={data.stats.notSubmitted}
+            totalStudents={data.stats.totalStudents}
+          />
 
-      {/* Charts Section (wrapped for image export) */}
-      <div
-        id="analytics-charts-section"
-        className="flex flex-col gap-5 xl:flex-row xl:gap-6"
-      >
-        <ParticipationBarChart data={currentData.participation} />
-        <SubmissionPieChart
-          submitted={stats.submitted}
-          late={stats.late}
-          notSubmitted={stats.notSubmitted}
-        />
-      </div>
+          {/* Charts Section (wrapped for image export) */}
+          <div
+            id="analytics-charts-section"
+            className="flex flex-col gap-5 xl:flex-row xl:gap-6"
+          >
+            <ParticipationBarChart data={data.participation} />
+            <SubmissionPieChart
+              submitted={data.stats.submitted}
+              late={data.stats.late}
+              notSubmitted={data.stats.notSubmitted}
+            />
+          </div>
 
-      {/* AI Insight */}
-      <AIInsightCard className={selectedClassName} />
+          {/* AI Insight */}
+          <AIInsightCard className={selectedClassName} />
 
-      {/* Student Recap Table */}
-      <StudentRecapTable students={currentData.students} />
+          {/* Student Recap Table */}
+          <StudentRecapTable students={data.students} />
+        </>
+      )}
     </div>
   );
 }

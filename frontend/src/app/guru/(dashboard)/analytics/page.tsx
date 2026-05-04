@@ -20,41 +20,41 @@ import {
 
 const mockClasses = [
   { id: "all", name: "Semua Kelas" },
-  { id: "class-1", name: "Kelas 9A" },
-  { id: "class-2", name: "Kelas 9B" },
-  { id: "class-3", name: "Kelas 8A" },
+  { id: "class-1", name: "Kelas X IPA 1" },
+  { id: "class-2", name: "Kelas X IPA 2" },
+  { id: "class-3", name: "Kelas X IPA 3" },
 ];
 
 const mockAssignmentFilters = [
   { id: "all", title: "Semua Tugas" },
   { id: "asg-1", title: "Tugas Matematika Bab 1" },
-  { id: "asg-2", title: "Essay Bahasa Indonesia" },
-  { id: "asg-3", title: "Laporan Praktikum IPA" },
-  { id: "asg-4", title: "Tugas Bahasa Inggris" },
-  { id: "asg-5", title: "Tugas Matematika Bab 2" },
+  { id: "asg-2", title: "Aljabar Linier Fundamental" },
+  { id: "asg-3", title: "HAMAAAAAA" },
+  { id: "asg-4", title: "Integral dan Persamaan Diferensial" },
+  { id: "asg-5", title: "Logika Informatika" },
 ];
 
 const mockStudents = [
-  { id: "s1", name: "Ahmad Fauzi", avgScore: 85.2, submitted: 5, late: 1, notSubmitted: 0 },
-  { id: "s2", name: "Budi Santoso", avgScore: 72.0, submitted: 4, late: 2, notSubmitted: 1 },
-  { id: "s3", name: "Citra Dewi", avgScore: 91.5, submitted: 6, late: 0, notSubmitted: 0 },
-  { id: "s4", name: "Dian Permata", avgScore: 68.3, submitted: 3, late: 1, notSubmitted: 2 },
-  { id: "s5", name: "Eko Prasetyo", avgScore: 55.0, submitted: 2, late: 1, notSubmitted: 3 },
-  { id: "s6", name: "Fitri Handayani", avgScore: 88.7, submitted: 5, late: 1, notSubmitted: 0 },
-  { id: "s7", name: "Galih Pratama", avgScore: 79.4, submitted: 4, late: 2, notSubmitted: 0 },
-  { id: "s8", name: "Hana Safitri", avgScore: 94.2, submitted: 6, late: 0, notSubmitted: 0 },
+  { id: "s1", name: "Gradien UHUY", avgScore: 85.2, submitted: 5, late: 1, notSubmitted: 0 },
+  { id: "s2", name: "Azhar turu", avgScore: 72.0, submitted: 4, late: 2, notSubmitted: 1 },
+  { id: "s3", name: "Ruchita Rajin", avgScore: 91.5, submitted: 6, late: 0, notSubmitted: 0 },
+  { id: "s4", name: "hoho", avgScore: 68.3, submitted: 3, late: 1, notSubmitted: 2 },
+  { id: "s5", name: "EYANTO", avgScore: 55.0, submitted: 2, late: 1, notSubmitted: 3 },
+  { id: "s6", name: "HAMAAA", avgScore: 88.7, submitted: 5, late: 1, notSubmitted: 0 },
+  { id: "s7", name: "Galih", avgScore: 79.4, submitted: 4, late: 2, notSubmitted: 0 },
+  { id: "s8", name: "GYOZZAH", avgScore: 94.2, submitted: 6, late: 0, notSubmitted: 0 },
   { id: "s9", name: "Irfan Hakim", avgScore: 62.8, submitted: 3, late: 2, notSubmitted: 1 },
-  { id: "s10", name: "Jasmine Putri", avgScore: 76.5, submitted: 4, late: 1, notSubmitted: 1 },
-  { id: "s11", name: "Kevin Wijaya", avgScore: 83.1, submitted: 5, late: 0, notSubmitted: 1 },
-  { id: "s12", name: "Lina Marlina", avgScore: 70.9, submitted: 4, late: 2, notSubmitted: 0 },
+  { id: "s10", name: "RAFI AHMAD", avgScore: 76.5, submitted: 4, late: 1, notSubmitted: 1 },
+  { id: "s11", name: "Kevin", avgScore: 83.1, submitted: 5, late: 0, notSubmitted: 1 },
+  { id: "s12", name: "ZHAFIRAH", avgScore: 70.9, submitted: 4, late: 2, notSubmitted: 0 },
 ];
 
 const mockParticipation = [
-  { assignment: "Matematika Bab 1", sudah: 20, terlambat: 4, belum: 3 },
-  { assignment: "Essay B.Indo", sudah: 18, terlambat: 5, belum: 4 },
-  { assignment: "Praktikum IPA", sudah: 22, terlambat: 3, belum: 2 },
-  { assignment: "B. Inggris", sudah: 15, terlambat: 6, belum: 6 },
-  { assignment: "Matematika Bab 2", sudah: 24, terlambat: 2, belum: 1 },
+  { assignment: "Tugas Matematika Bab 1", sudah: 20, terlambat: 4, belum: 3 },
+  { assignment: "Aljabar Linier Fundamental", sudah: 18, terlambat: 5, belum: 4 },
+  { assignment: "HAMAAAAAA", sudah: 22, terlambat: 3, belum: 2 },
+  { assignment: "Integral dan Persamaan Diferensial", sudah: 15, terlambat: 6, belum: 6 },
+  { assignment: "Logika Informatika", sudah: 24, terlambat: 2, belum: 1 },
 ];
 
 // Per-class mock data variants
@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
           Analisis & Laporan
         </h1>
         <p className="text-sm text-[#565F6B] sm:text-base">
-          Pantau perkembangan akademik siswa secara detail
+          Analisis perkembangan akademik siswa secara menyeluruh berdasarkan data pengumpulan tugas, nilai rata-rata, dan pola keterlambatan. Gunakan filter untuk melihat data per kelas atau tugas tertentu, serta manfaatkan fitur ekspor untuk laporan yang lebih mendalam.
         </p>
       </div>
 

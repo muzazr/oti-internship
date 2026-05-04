@@ -130,7 +130,7 @@ export function RegisterForm() {
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#737686]" />
             <input
               type="text"
-              placeholder="John Doe"
+              placeholder="Gradien Ridholumintu"
               {...register("fullName")}
               className="w-full h-[50px] pl-10 pr-4 bg-[#FAF8FF] border border-[#C3C6D7] rounded-[8px] text-[16px] text-[#191B23] placeholder:text-[#8C8D91] focus:outline-none focus:ring-2 focus:ring-[#004AC6] focus:border-transparent transition-all"
             />

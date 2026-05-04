@@ -22,17 +22,17 @@ const defaultInsights: InsightItem[] = [
   {
     icon: TrendingDown,
     color: "#E11D48",
-    text: "Kelas 9A memiliki tren pengumpulan yang menurun 15% dalam 2 minggu terakhir. Pertimbangkan untuk memberikan reminder tambahan.",
+    text: "Kelas X IPA 1 memiliki tren pengumpulan yang menurun 15% dalam 2 minggu terakhir. Pertimbangkan untuk memberikan reminder tambahan.",
   },
   {
     icon: AlertTriangle,
     color: "#D97706",
-    text: "5 siswa konsisten terlambat mengumpulkan tugas Matematika. Pola ini terdeteksi dalam 3 tugas terakhir.",
+    text: "5 siswa dari Kelas X IPA 1 konsisten terlambat mengumpulkan tugas Matematika. Pola ini terdeteksi dalam 3 tugas terakhir.",
   },
   {
     icon: TrendingUp,
     color: "#16A34A",
-    text: "Rata-rata nilai Bahasa Indonesia naik 8% dibanding bulan lalu. Strategi pembelajaran saat ini efektif.",
+    text: "Rata-rata nilai matematika naik 8% dibanding bulan lalu. Strategi pembelajaran saat ini efektif.",
   },
   {
     icon: Calendar,

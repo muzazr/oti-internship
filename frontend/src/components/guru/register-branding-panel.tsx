@@ -3,17 +3,17 @@ import { GraduationCap, UserCheck } from "lucide-react";
 
 export function RegisterBrandingPanel() {
   return (
-    <div className="relative hidden lg:flex w-[720px] min-h-screen bg-[#2563EB] overflow-hidden">
+    <div className="relative hidden lg:flex w-[720px] min-h-screen  overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
           src="/images/login-bg.jpg"
           alt="Classroom background"
           fill
-          className="object-cover opacity-20"
+          className="object-cover z-10"
           priority
         />
-        <div className="absolute inset-0 bg-[#2563EB]/60" />
+     
       </div>
 
       {/* Content Overlay */}

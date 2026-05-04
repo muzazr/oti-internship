@@ -8,13 +8,13 @@ const Table = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-interface itemProps {
-  info: string
+interface ItemProps {
+  info: React.ReactNode
   content: React.ReactNode
 }
 
-// For left-right info-content
-export const LeftRight = ({ info, content }: itemProps) => {
+// For ItemProps-right info-content
+export const LeftRight = ({ info, content }: ItemProps) => {
   return (
     <div className="flex justify-between items-center w-full">
       <p className="text-neutral-700">{info}</p>
@@ -24,7 +24,7 @@ export const LeftRight = ({ info, content }: itemProps) => {
 }
 
 // For up-down info-content
-export const UpDown = ({ info, content }: itemProps) => {
+export const UpDown = ({ info, content }: ItemProps) => {
   return (
     <div className="flex flex-col gap-1">
       <p className="text-foreground-secondary text-xs font-bold">{info}</p>

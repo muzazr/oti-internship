@@ -1,5 +1,6 @@
 import express from "express"
 
+import aiRoutes from "./modules/ai/ai.routes.js"
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js"
 import authRoutes from "./modules/auth/auth.routes.js"
 import classesRoutes from "./modules/classes/classes.routes.js"
@@ -13,6 +14,7 @@ import teachersRoutes from "./modules/teachers/teachers.routes.js"
 
 const router = express.Router()
 
+router.use("/ai", aiRoutes)
 router.use("/whatsapp", whatsappRoutes)
 router.use("/auth", authRoutes)
 router.use("/classes", classesRoutes)

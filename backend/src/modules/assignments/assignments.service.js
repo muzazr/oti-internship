@@ -24,30 +24,40 @@ export async function findById(id, teacherId) {
 }
 
 export async function create(assignmentData, classIds) {
-    // insert assignment
+    console.log("SERVICE ASSIGNMENT DATA:", assignmentData)
+    console.log("SERVICE CLASS IDS:", classIds)
+
     const { data: assignment, error: assignmentError } = await supabaseAdmin
         .from("assignments")
         .insert(assignmentData)
         .select()
         .single()
 
-    if (assignmentError) throw assignmentError
+    if (assignmentError) {
+        console.error("ASSIGNMENT INSERT ERROR:", assignmentError)
+        throw assignmentError
+    }
 
-    // insert assignment_classes
+    console.log("CREATED ASSIGNMENT:", assignment)
+
     if (classIds && classIds.length > 0) {
         const rows = classIds.map((classId) => ({
             assignment_id: assignment.id,
             class_id: classId,
         }))
 
+        console.log("ASSIGNMENT_CLASSES ROWS:", rows)
+
         const { error: classesError } = await supabaseAdmin
             .from("assignment_classes")
             .insert(rows)
 
-        if (classesError) throw classesError
+        if (classesError) {
+            console.error("ASSIGNMENT_CLASSES INSERT ERROR:", classesError)
+            throw classesError
+        }
     }
 
-    // return full data
     return findById(assignment.id, assignmentData.teacher_id)
 }
 

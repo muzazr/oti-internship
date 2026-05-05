@@ -1,0 +1,985 @@
+openapi: 3.0.0
+info:
+  title: Oti Internship API
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000/api
+
+tags:
+  - name: Auth
+    description: Authentication and session
+  - name: Assignments
+    description: Assignments management
+  - name: Classes
+    description: Classes management
+  - name: Reports
+    description: Reports and exports
+  - name: Students
+    description: Students management
+  - name: Subjects
+    description: Subjects management
+  - name: Submissions
+    description: Assignment submissions
+  - name: UploadLinks
+    description: Upload link generation and access
+  - name: Whatsapp
+    description: Whatsapp webhook
+  - name: Teachers
+    description: Teachers management
+  - name: AI
+    description: AI image processing
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      session:
+                        type: object
+                        properties:
+                          access_token:
+                            type: string
+                      user:
+                        type: object
+        "401":
+          description: Unauthorized
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, full_name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                full_name:
+                  type: string
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+
+  /assignments:
+    get:
+      tags: [Assignments]
+      summary: Get all assignments
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+    post:
+      tags: [Assignments]
+      summary: Create assignment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, class_ids]
+              properties:
+                subject_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                title:
+                  type: string
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 5000
+                instruction:
+                  type: string
+                  maxLength: 5000
+                deadline:
+                  type: string
+                  format: date-time
+                  nullable: true
+                allow_late_submission:
+                  type: boolean
+                max_files:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                max_file_size_mb:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                accepts_file:
+                  type: boolean
+                accepts_link:
+                  type: boolean
+                class_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+            example:
+              subject_id: null
+              title: "Tugas 1"
+              description: "Kerjakan soal 1-10"
+              instruction: "Upload PDF"
+              deadline: "2026-05-10T17:00:00+07:00"
+              allow_late_submission: true
+              max_files: 5
+              max_file_size_mb: 10
+              accepts_file: true
+              accepts_link: false
+              class_ids:
+                - "5a38bc2a-b0e2-44f3-a9ca-03adfb4bb606"
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /assignments/{id}:
+    get:
+      tags: [Assignments]
+      summary: Get assignment by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    patch:
+      tags: [Assignments]
+      summary: Update assignment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                title:
+                  type: string
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 5000
+                  nullable: true
+                instruction:
+                  type: string
+                  maxLength: 5000
+                  nullable: true
+                deadline:
+                  type: string
+                  format: date-time
+                  nullable: true
+                allow_late_submission:
+                  type: boolean
+                max_files:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                max_file_size_mb:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                accepts_file:
+                  type: boolean
+                accepts_link:
+                  type: boolean
+                class_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+            example:
+              title: "Tugas 1 Revisi"
+              deadline: null
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      tags: [Assignments]
+      summary: Delete assignment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /assignments/{id}/publish:
+    post:
+      tags: [Assignments]
+      summary: Publish assignment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /classes:
+    get:
+      tags: [Classes]
+      summary: Get all classes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+    post:
+      tags: [Classes]
+      summary: Create class
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                academic_year:
+                  type: string
+                  maxLength: 20
+            example:
+              name: "Kelas 1A"
+              academic_year: "2025/2026"
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /classes/{id}:
+    get:
+      tags: [Classes]
+      summary: Get class by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    patch:
+      tags: [Classes]
+      summary: Update class
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                academic_year:
+                  type: string
+                  maxLength: 20
+                  nullable: true
+            example:
+              name: "Kelas 1B"
+              academic_year: null
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      tags: [Classes]
+      summary: Delete class
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /reports/assignments/{assignmentId}/recap:
+    get:
+      tags: [Reports]
+      summary: Get assignment recap
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /reports/assignments/{assignmentId}/export.csv:
+    get:
+      tags: [Reports]
+      summary: Export assignment recap as CSV
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /students:
+    get:
+      tags: [Students]
+      summary: Get all students
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: class_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "400":
+          description: Bad Request
+    post:
+      tags: [Students]
+      summary: Create student
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [class_id, full_name, student_code]
+              properties:
+                class_id:
+                  type: string
+                  format: uuid
+                full_name:
+                  type: string
+                  maxLength: 200
+                student_code:
+                  type: string
+                  maxLength: 50
+                whatsapp_number:
+                  type: string
+                  maxLength: 20
+                  nullable: true
+            example:
+              class_id: "5a38bc2a-b0e2-44f3-a9ca-03adfb4bb606"
+              full_name: "Andi Pratama"
+              student_code: "001"
+              whatsapp_number: null
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /students/{id}:
+    get:
+      tags: [Students]
+      summary: Get student by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    patch:
+      tags: [Students]
+      summary: Update student
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                class_id:
+                  type: string
+                  format: uuid
+                full_name:
+                  type: string
+                  maxLength: 200
+                student_code:
+                  type: string
+                  maxLength: 50
+                whatsapp_number:
+                  type: string
+                  maxLength: 20
+                  nullable: true
+            example:
+              full_name: "Andi Pratama"
+              student_code: "002"
+              whatsapp_number: null
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      tags: [Students]
+      summary: Delete student
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+  /subjects:
+    get:
+      tags: [Subjects]
+      summary: Get all subjects
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+    post:
+      tags: [Subjects]
+      summary: Create subject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+            example:
+              name: "Matematika"
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /subjects/{id}:
+    patch:
+      tags: [Subjects]
+      summary: Update subject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+            example:
+              name: "Matematika Lanjut"
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+    delete:
+      tags: [Subjects]
+      summary: Delete subject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /submissions/{token}:
+    post:
+      tags: [Submissions]
+      summary: Submit assignment files
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+          description: Upload link token
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+
+  /submissions/{id}:
+    get:
+      tags: [Submissions]
+      summary: Get submission by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /submissions/{id}/grade:
+    patch:
+      tags: [Submissions]
+      summary: Grade submission
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [score]
+              properties:
+                score:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                feedback:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+            example:
+              score: 85
+              feedback: "Perbaiki format jawaban"
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+
+  /upload-links:
+    post:
+      tags: [UploadLinks]
+      summary: Generate upload links
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assignment_id, student_ids, source]
+              properties:
+                assignment_id:
+                  type: string
+                  format: uuid
+                student_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                source:
+                  type: string
+                  enum: [teacher_dashboard, whatsapp_bot, simulation]
+            example:
+              assignment_id: "d2a6f6b4-3c0b-4b2a-9e8a-1c6c10c1a111"
+              student_ids:
+                - "c1f3a2d1-7e12-4f0e-9b1b-1d2b1e2a3333"
+              source: "teacher_dashboard"
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /upload-links/{token}:
+    get:
+      tags: [UploadLinks]
+      summary: Validate upload token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+
+  /upload-links/{token}/access:
+    post:
+      tags: [UploadLinks]
+      summary: Record page access
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+        "404":
+          description: Not Found
+
+  /whatsapp/webhook:
+    get:
+      tags: [Whatsapp]
+      summary: Verify webhook
+      responses:
+        "200":
+          description: OK
+    post:
+      tags: [Whatsapp]
+      summary: Receive webhook
+      responses:
+        "200":
+          description: OK
+
+  /ai/crop:
+    post:
+      tags: [AI]
+      summary: Crop and enhance assignment photo using AI
+      description: >
+        Proxy endpoint for processing an assignment photo before submission.
+        The backend forwards the uploaded image to the AI inference service and
+        returns either a cropped JPEG preview or a JSON failure result.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Assignment photo. Supported formats are JPG, PNG, and WEBP. Maximum size is 8MB.
+      responses:
+        "200":
+          description: >
+            Returns image/jpeg when the document is detected and readable, or
+            application/json when detection/readability fails.
+          headers:
+            X-Detected:
+              description: Whether a document was detected.
+              schema:
+                type: boolean
+            X-Readable:
+              description: Whether the processed document is readable.
+              schema:
+                type: boolean
+            X-Detection-Confidence:
+              description: Document detection confidence score.
+              schema:
+                type: number
+                format: float
+            X-Readability-Score:
+              description: Probability that the image is unreadable. Lower is better.
+              schema:
+                type: number
+                format: float
+            X-Inference-Ms:
+              description: AI inference duration in milliseconds.
+              schema:
+                type: number
+                format: float
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+              example: JPEG binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detected:
+                    type: boolean
+                    example: true
+                  readable:
+                    type: boolean
+                    example: false
+                  detection_confidence:
+                    type: number
+                    format: float
+                    example: 0.8912
+                  readability_score:
+                    type: number
+                    format: float
+                    example: 0.7834
+                  stage_failed:
+                    type: string
+                    enum: [detection, readability, unknown]
+                    example: readability
+                  inference_ms:
+                    type: number
+                    format: float
+                    example: 287.3
+        "400":
+          description: Missing image field or unsupported file format.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.
+        "502":
+          description: AI inference service unavailable.
+        "504":
+          description: AI inference service timeout.

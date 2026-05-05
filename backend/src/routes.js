@@ -1,5 +1,6 @@
 import express from "express"
 
+import aiRoutes from "./modules/ai/ai.routes.js"
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js"
 import authRoutes from "./modules/auth/auth.routes.js"
 import classesRoutes from "./modules/classes/classes.routes.js"
@@ -11,8 +12,11 @@ import submissionsRoutes from "./modules/submissions/submissions.routes.js"
 import reportsRoutes from "./modules/reports/reports.routes.js"
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js"
 
+
+
 const router = express.Router()
 
+router.use("/ai", aiRoutes)
 router.use("/whatsapp", whatsappRoutes)
 router.use("/auth", authRoutes)
 router.use("/classes", classesRoutes)
@@ -23,5 +27,6 @@ router.use("/upload-links", uploadLinksRoutes)
 router.use("/submissions", submissionsRoutes)
 router.use("/reports", reportsRoutes)
 router.use("/dashboard", dashboardRoutes)
+
 
 export default router

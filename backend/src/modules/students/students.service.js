@@ -22,6 +22,28 @@ export async function findById(id) {
     return data
 }
 
+export async function findByWhatsappNumber(whatsappNumber) {
+    const { data, error } = await supabaseAdmin
+        .from("students")
+        .select("*, classes(id, name, teacher_id)")
+        .eq("whatsapp_number", whatsappNumber)
+        .single()
+
+    if (error) return null
+    return data
+}
+
+export async function findByStudentCode(studentCode) {
+    const { data, error } = await supabaseAdmin
+        .from("students")
+        .select("*, classes(id, name, teacher_id)")
+        .eq("student_code", studentCode)
+        .single()
+
+    if (error) return null
+    return data
+}
+
 export async function create(data) {
     const { data: created, error } = await supabaseAdmin
         .from("students")

@@ -3,9 +3,10 @@ import Link from "next/link"
 
 const variants = {
   default: "bg-primary-500 text-primary-1200",
-  hollow: "",
-  send: "",
-  error: "",
+  hollow:
+    "border border-primary-600 bg-primary-1200 text-primary-100 hover:opacity-60!",
+  send: "bg-secondary-600 text-neutral-100",
+  error: "bg-error-200! text-neutral-100",
 }
 
 interface Props {
@@ -13,6 +14,8 @@ interface Props {
   variant?: "default" | "hollow" | "send" | "error"
   link?: string
   className?: string
+  onClick?: () => void
+  disabled?: boolean
 }
 
 function handleVariants(variant: string) {
@@ -23,21 +26,29 @@ function handleVariants(variant: string) {
   }
 }
 
-const Button = ({ children, variant = "default", link = "", className = "" }: Props) => {
+const Button = ({
+  children,
+  variant = "default",
+  link = "",
+  className = "",
+  onClick = () => {},
+  disabled = false,
+}: Props) => {
+  let classNames = `p-4 not-[:disabled]:cursor-pointer rounded-2xl transition-all font-bold flex justify-center items-center text-xs gap-2 hover:not-[:disabled]:opacity-80 disabled:opacity-60 ${handleVariants(variant)} ${className}`
   return link === "" ? (
     <button
-      className={`p-4 transition-all font-bold flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)} ${className}`}
+      className={classNames}
+      onClick={() => onClick()}
+      disabled={disabled}
     >
       {children}
     </button>
   ) : (
-    <Link
-      href={link}
-      className={`p-4 transition-all flex justify-center text-xs gap-2 hover:opacity-80 ${handleVariants(variant)} ${className}`}
-    >
+    <Link href={link} className={classNames}>
       {children}
     </Link>
   )
 }
 
 export default Button
+

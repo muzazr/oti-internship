@@ -21,16 +21,28 @@ export const getAssignment = asyncHandler(async (req, res) => {
 export const createAssignment = asyncHandler(async (req, res) => {
     const { class_ids, ...assignmentFields } = req.body
 
-    // verify all classes belong to this teacher
+    console.log("REQ USER:", req.user?.id)
+    console.log("REQ BODY:", req.body)
+    console.log("CLASS IDS:", class_ids)
+    console.log("ASSIGNMENT FIELDS:", assignmentFields)
+
     const allOwned = await assignmentsService.verifyClassesOwnership(class_ids, req.user.id)
+
+    console.log("ALL CLASSES OWNED:", allOwned)
+
     if (!allOwned) {
         throw new AppError("One or more classes not found or you do not have permission", 400)
     }
 
-    const data = await assignmentsService.create(
-        { ...assignmentFields, teacher_id: req.user.id, status: "draft" },
-        class_ids
-    )
+    const payload = {
+        ...assignmentFields,
+        teacher_id: req.user.id,
+        status: "draft",
+    }
+
+    console.log("CREATE ASSIGNMENT PAYLOAD:", payload)
+
+    const data = await assignmentsService.create(payload, class_ids)
 
     return successResponse(res, "Assignment created successfully", data, 201)
 })

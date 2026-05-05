@@ -48,7 +48,14 @@ export const validateToken = asyncHandler(async (req, res) => {
 
     // check expired
     if (new Date(link.expires_at) < new Date()) {
-        throw new AppError("This upload link has expired", 410)
+        throw new AppError(
+            "Link upload sudah kedaluwarsa. Silakan kembali ke WhatsApp dan pilih Kirim Tugas untuk mendapatkan link baru.",
+            410
+        )
+    }
+
+    if (link.used_at) {
+        throw new AppError("This upload link has already been used", 410)
     }
 
     // check assignment status

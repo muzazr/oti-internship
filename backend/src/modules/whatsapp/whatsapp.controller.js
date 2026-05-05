@@ -1,5 +1,9 @@
 import { env } from "../../config/env.js"
-import { sendWhatsAppTextMessage } from "./whatsapp.service.js"
+import {
+    getNonTextMessageReply,
+    handleIncomingTextMessage,
+    sendWhatsAppTextMessage,
+} from "./whatsapp.service.js"
 
 export function verifyWebhook(req, res) {
     const mode = req.query["hub.mode"]
@@ -60,35 +64,13 @@ export async function receiveWebhook(req, res) {
         })
 
         if (messageType !== "text") {
-            await safeReply(
-                from,
-                "Untuk saat ini, bot hanya menerima pesan teks. Ketik *kirim tugas* untuk mulai."
-            )
+            await safeReply(from, getNonTextMessageReply())
 
             return res.sendStatus(200)
         }
 
-        if (text === "halo" || text === "hi") {
-            await safeReply(
-                from,
-                "Halo! Bot pengumpulan tugas aktif. Ketik *kirim tugas* untuk mulai."
-            )
-        } else if (text === "kirim tugas" || text === "upload tugas") {
-            await safeReply(
-                from,
-                "Baik. Ini link upload tugas dummy: https://example.com/upload/dummy-token"
-            )
-        } else if (text === "bantuan" || text === "help") {
-            await safeReply(
-                from,
-                "Menu bantuan:\n\n- Ketik *kirim tugas* untuk meminta link upload.\n- Ketik *status tugas* untuk mengecek status tugas."
-            )
-        } else {
-            await safeReply(
-                from,
-                "Perintah belum dikenali. Ketik *kirim tugas* untuk mulai."
-            )
-        }
+        const reply = await handleIncomingTextMessage(from, message.text?.body)
+        await safeReply(from, reply)
 
         return res.sendStatus(200)
     } catch (error) {

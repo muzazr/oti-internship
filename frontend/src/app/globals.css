@@ -66,6 +66,8 @@
 
   --color-success-100: var(--success-100);
   --color-success-200: var(--success-200);
+
+  --animate-expand: expand 1s linear infinite;
 }
 
 :root {
@@ -134,5 +136,16 @@
   }
   html {
     font-family: "Plus Jakarta Sans";
+  }
+}
+
+@keyframes expand {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 2;
   }
 }

@@ -50,7 +50,7 @@ const Preview = ({ imageItem, onRetakeClick, onDeleteClick }: Props) => {
       <div className="flex justify-between">
         <div className="flex items-center gap-4">
           <Image
-            className={`${isACTUALLYValid || isValidFromUser ? "rounded-lg border border-black" : "bg-error-300 p-5"}`}
+            className={`${isACTUALLYValid || isValidFromUser ? "rounded-lg border aspect-square border-black" : "bg-error-300 p-5"}`}
             src={source}
             alt="The image you took"
             height="64"

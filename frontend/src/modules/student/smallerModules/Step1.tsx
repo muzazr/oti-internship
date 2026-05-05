@@ -66,10 +66,10 @@ function numberToWhatsAppLink(phoneNumber: string) {
 }
 
 interface Props {
-  onClick: () => void
+  onNextClick: () => void
 }
 
-const Page = ({ onClick }: Props) => {
+const Page = ({ onNextClick }: Props) => {
   const contactLink = numberToWhatsAppLink(teacherNumber)
   return (
     <>
@@ -104,7 +104,7 @@ const Page = ({ onClick }: Props) => {
             Hubungi Guru <ArrowUpRight className="size-5 stroke-primary-500" />
           </Button>
         )}
-        <Button onClick={() => onClick()}>
+        <Button onClick={() => onNextClick()}>
           Lanjut <ArrowRight className="size-4" />
         </Button>
       </div>

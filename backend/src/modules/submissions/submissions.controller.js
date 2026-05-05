@@ -32,6 +32,10 @@ export const submitAssignment = asyncHandler(async (req, res) => {
         throw new AppError("This upload link has expired", 410)
     }
 
+    if (link.used_at) {
+        throw new AppError("This upload link has already been used", 410)
+    }
+
     const assignment = link.assignments
 
     console.log("ASSIGNMENT FROM LINK:", assignment)

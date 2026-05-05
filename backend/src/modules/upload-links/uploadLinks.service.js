@@ -1,18 +1,20 @@
 import crypto from "crypto"
 import { supabaseAdmin } from "../../config/supabase.js"
 
-const TOKEN_EXPIRY_DAYS = 7
+const TOKEN_EXPIRY_HOURS = 1
 
 export async function generateLinks(assignmentId, studentIds, source) {
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + TOKEN_EXPIRY_DAYS)
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
 
     const rows = studentIds.map((studentId) => ({
         assignment_id: assignmentId,
         student_id: studentId,
-        token: crypto.randomBytes(32).toString("hex"),
+        token: createUploadToken(studentId, assignmentId, now),
         source,
+        created_at: now.toISOString(),
         expires_at: expiresAt.toISOString(),
+        used_at: null,
     }))
 
     const { data, error } = await supabaseAdmin
@@ -22,6 +24,11 @@ export async function generateLinks(assignmentId, studentIds, source) {
 
     if (error) throw error
     return data
+}
+
+export async function generateLink(assignmentId, studentId, source) {
+    const [link] = await generateLinks(assignmentId, [studentId], source)
+    return link
 }
 
 export async function findByToken(token) {
@@ -95,4 +102,12 @@ export async function verifyStudentsInAssignmentClasses(assignmentId, studentIds
 
     if (sError) throw sError
     return students.length === studentIds.length
+}
+
+function createUploadToken(studentId, assignmentId, generatedAt) {
+    const salt = crypto.randomBytes(32).toString("hex")
+    return crypto
+        .createHash("sha256")
+        .update(`${studentId}:${assignmentId}:${generatedAt.toISOString()}:${salt}`)
+        .digest("hex")
 }

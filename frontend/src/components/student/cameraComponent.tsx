@@ -4,15 +4,15 @@ import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { imageItem } from "./preview"
 import { renameFileWithIndex } from "@/app/student/assignment/submit/page"
-import { Camera } from "lucide-react"
+import { Camera, Check, X } from "lucide-react"
 import Button from "./button"
 
 async function validateImage(imageFile: File): Promise<boolean> {
   // do whatever the AI needs I guess. For now aku kasih setTimeout aja
   return new Promise((resolve) => {
     setTimeout(() => {
-      const result = Math.random() > 0.3 // 70% true, 30% false
-      resolve(result)
+      // const result = Math.random() > 0.3 // 70% true, 30% false
+      resolve(false)
     }, 2000) // 2 seconds delay
   })
 
@@ -46,30 +46,34 @@ const CameraComponent = ({
 
   const actualIndex = indexToEdit ? indexToEdit + 1 : images.length + 1
 
-  useEffect(() => {
-    const startCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      })
+
+      streamRef.current = stream
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play().catch((err) => {
+          console.log("Play failed:", err)
         })
+      }
 
-        streamRef.current = stream
+      setCameraStatus("granted")
+    } catch (err) {
+      console.error(err)
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-
-        setCameraStatus("granted")
-      } catch (err) {
-        console.error(err)
-
-        if ((err as DOMException).name === "NotAllowedError") {
-          setCameraStatus("denied")
-        } else {
-          setCameraStatus("error")
-        }
+      if ((err as DOMException).name === "NotAllowedError") {
+        setCameraStatus("denied")
+      } else {
+        setCameraStatus("error")
       }
     }
+  }
+
+  useEffect(() => {
     startCamera()
   }, [])
 
@@ -82,11 +86,11 @@ const CameraComponent = ({
       track.stop()
     })
 
-    streamRef.current = null
-
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
+
+    streamRef.current = null
   }
 
   const takePhoto = () => {
@@ -121,7 +125,7 @@ const CameraComponent = ({
       const img: imageItem = {
         file: file,
         displayName: `Halaman_${actualIndex}.${ext}`,
-        isSuccessfullyValidated: imageIsValid !== true,
+        isSuccessfullyValidated: imageIsValid === true,
       }
 
       setImages((prev) => {
@@ -136,7 +140,23 @@ const CameraComponent = ({
     })
   }
 
-  if (cameraStatus === "idle" && imageIsValid === null) {
+  const removeImage = (index: number) => {
+    setImages((prev) => {
+      const filtered = prev.filter((_, i) => i !== index)
+      return filtered.map((img, index) => {
+        const ext =
+          img.file.type === "image/jpeg" ? "jpg" : img.file.type.split("/")[1]
+        return { ...img, displayName: `Halaman_${index + 1}.${ext}` }
+      })
+    })
+  }
+
+  if (
+    cameraStatus === "idle" &&
+    imageIsValid === null &&
+    imageComponentSource !== "/student/placeholder.webp"
+  ) {
+    // basically if the system is checking the image
     return <div>AoKWAWOKAWOK</div>
   } else
     return (
@@ -149,6 +169,7 @@ const CameraComponent = ({
                 ref={videoRef}
                 autoPlay
                 playsInline
+                muted
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -165,37 +186,63 @@ const CameraComponent = ({
           )}
 
           <canvas ref={canvasRef} className="hidden" />
-          <div className="font-semibold text-sm! w-full *:w-full *:p-3 *:text-center">
+          <div className="*:font-semibold *:text-sm! w-full *:w-full *:p-3 *:text-center *:flex *:gap-2 *:justify-center *:items-center">
             {imageIsValid === null ? (
-              <Button
-                variant="send"
-                // className="font-semibold text-sm!"
-                onClick={takePhoto}
-              >
+              <Button variant="send" onClick={takePhoto}>
                 Ambil Foto Tugas{" "}
                 <Camera className="stroke-secondary-600 fill-neutral-100" />
               </Button>
             ) : imageIsValid === true ? (
-              <div className="bg-success-200 ">Foto Berhasil Divalidasi</div>
+              <div className="bg-success-200 text-success-100">
+                <Check className="size-4.5 rounded-full bg-success-100 stroke-success-200 stroke-3 p-0.5" />
+                Foto Berhasil Divalidasi
+              </div>
             ) : (
-              <div className="text-neutral-100">Foto Gagal Divalidasi</div>
+              <div className="bg-error-300 text-primary-100">
+                <X className="size-4.5 rounded-full bg-error-100 stroke-error-300 stroke-3 p-0.5" />
+                Foto Gagal Divalidasi
+              </div>
             )}
           </div>
         </div>
         <div>
-          <hr />
+          <hr className="border-neutral-200 -mx-4" />
           <div className="grid grid-cols-2 gap-4 p-4 *:rounded-lg">
-            {imageIsValid === null ? (
+            {imageIsValid !== false ? (
               <>
-                <Button onClick={() => onNextClick()} variant="hollow">
+                <Button
+                  onClick={() => {
+                    if (imageIsValid === null) return onNextClick()
+                    removeImage(images.length - 1)
+                    onNextClick()
+                  }}
+                  variant="hollow"
+                >
                   Batal
                 </Button>
-                <Button disabled={imageIsValid === null}>Simpan Foto</Button>
+                <Button
+                  disabled={imageIsValid === null}
+                  onClick={() => onNextClick()}
+                >
+                  Simpan Foto
+                </Button>
               </>
             ) : (
               <>
-                <Button variant="hollow">Foto Ulang</Button>
-                <Button variant="error">Tetap Simpan</Button>
+                <Button
+                  variant="hollow"
+                  onClick={() => {
+                    removeImage(images.length - 1)
+                    setImageIsValid(null)
+                    setCameraStatus("granted")
+                    startCamera()
+                  }}
+                >
+                  Foto Ulang
+                </Button>
+                <Button variant="error" onClick={() => onNextClick()}>
+                  Tetap Simpan
+                </Button>
               </>
             )}
           </div>

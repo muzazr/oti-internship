@@ -20,20 +20,26 @@ export interface imageItem {
 
 interface Props {
   imageItem: imageItem
+  isActuallyValid: boolean
   onRetakeClick: () => void
   onDeleteClick: () => void
 }
 
-const Preview = ({ imageItem, onRetakeClick, onDeleteClick }: Props) => {
-  const isACTUALLYValid = imageItem.isSuccessfullyValidated
-  const [isValidFromUser, setIsValidFromUser] = useState(isACTUALLYValid)
+const Preview = ({
+  imageItem,
+  isActuallyValid,
+  onRetakeClick,
+  onDeleteClick,
+}: Props) => {
+  const [isValid, setIsValid] = useState(isActuallyValid)
+  if (isValid !== isActuallyValid) setIsValid(isActuallyValid)
   const fileSize = formatSize(imageItem.file.size)
 
   let rootClassNames =
     "p-4 gap-3 flex flex-col items-center rounded-xl border *:w-full "
   let source, contentText, deleteIcon
 
-  if (isACTUALLYValid || isValidFromUser) {
+  if (isValid) {
     source = URL.createObjectURL(imageItem.file)
     contentText = `${fileSize} • Selesai`
     deleteIcon = <Trash className="stroke-neutral-700 fill-neutral-700" />
@@ -50,7 +56,7 @@ const Preview = ({ imageItem, onRetakeClick, onDeleteClick }: Props) => {
       <div className="flex justify-between">
         <div className="flex items-center gap-4">
           <Image
-            className={`${isACTUALLYValid || isValidFromUser ? "rounded-lg border aspect-square border-black" : "bg-error-300 p-5"}`}
+            className={`${isValid ? "rounded-lg border aspect-square border-black" : "bg-error-300 p-5"}`}
             src={source}
             alt="The image you took"
             height="64"
@@ -59,7 +65,7 @@ const Preview = ({ imageItem, onRetakeClick, onDeleteClick }: Props) => {
           <div>
             <p className="font-semibold">{imageItem.displayName}</p>
             <p
-              className={`whitespace-pre text-sm ${isACTUALLYValid ? "text-foreground-secondary" : ""}`}
+              className={`whitespace-pre text-sm ${isValid ? "text-foreground-secondary" : ""}`}
             >
               {contentText}
             </p>
@@ -73,7 +79,7 @@ const Preview = ({ imageItem, onRetakeClick, onDeleteClick }: Props) => {
           {deleteIcon}
         </Button>
       </div>
-      {isACTUALLYValid || isValidFromUser || (
+      {isValid || (
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant="hollow"
@@ -83,12 +89,7 @@ const Preview = ({ imageItem, onRetakeClick, onDeleteClick }: Props) => {
             Foto Ulang
             <RotateCw className="size-4.5 stroke-2" />
           </Button>
-          <Button
-            variant="error"
-            onClick={() => {
-              setIsValidFromUser((valid) => !valid)
-            }}
-          >
+          <Button variant="error" onClick={() => setIsValid((v) => !v)}>
             Tetap Simpan <ArrowUpFromLine className="size-4.5 stroke-3" />
           </Button>
         </div>

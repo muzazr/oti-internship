@@ -1,10 +1,7 @@
 "use client"
 
-// Weird thing for dev-ing
-let hasRun = false
-
 import React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ArrowLeft } from "lucide-react"
 
 import { Step1, Step2, Step3 } from "@/modules/student/steps"
@@ -36,35 +33,6 @@ const SubmissionPage = () => {
 
   const [indexToEdit, setIndexToEdit] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
-
-  // Once developing is complete. Remove these lines
-  useEffect(() => {
-    if (hasRun) return
-    hasRun = true
-    const loadMockImage = async () => {
-      const res = await fetch("/student/studentLanding.webp")
-      const blob = await res.blob()
-
-      const rawFile = new File([blob], "studentLanding.webp", {
-        type: blob.type,
-      })
-
-      for (let i = 0; i < 4; i++) {
-        const file = renameFileWithIndex(rawFile, i)
-        setImages((prev) => [
-          ...prev,
-          {
-            file: file,
-            displayName: `Halaman_${i + 1}.jpg`,
-            isSuccessfullyValidated: i == 1 || i == 2 ? false : true,
-          },
-        ])
-      }
-    }
-
-    loadMockImage()
-  }, [])
-  // Yes. Remove all of them
 
   return (
     <div className="flex gap-4 flex-col items-start *:w-full">

@@ -72,6 +72,7 @@ const Step2 = ({ onNextClick, setImages, images, setIndexToEdit }: Props) => {
           <Preview
             key={i}
             imageItem={img}
+            isActuallyValid={img.isSuccessfullyValidated}
             onRetakeClick={() => replaceImage(i)}
             onDeleteClick={() => removeImage(i)}
           />

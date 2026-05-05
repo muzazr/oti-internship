@@ -1,16 +1,12 @@
-// Weird thing for dev-ing
-let hasRun = false
+"use client"
 
 import React from "react"
 import Button from "@/components/student/button"
 import { Camera, SendHorizonal } from "lucide-react"
-import { useState, useEffect } from "react"
-
 import Preview, { imageItem } from "@/components/student/preview"
+import { useRouter } from "next/navigation"
 
 // vEdit these for backend fetching
-const studentClass = "8A"
-const name = "Maria Taek"
 const maxFiles = 5
 // ^Edit these
 
@@ -18,22 +14,15 @@ const maxFiles = 5
 // Just ctrl + f "Step2" and go to the second instance, you should see the const "images" on the line below it.
 // Oh yeah. I'm also using imageItem. Just POST the "file" property
 
-function renameFileWithIndex(file: File, index: number) {
-  const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1]
-
-  return new File(
-    [file],
-    `${studentClass}_${name}_Halaman_${index + 1}.${ext}`,
-    { type: file.type },
-  )
-}
-
 interface Props {
-  onClick: () => void
+  onNextClick: () => void
+  setImages: React.Dispatch<React.SetStateAction<imageItem[]>>
+  images: imageItem[]
+  setIndexToEdit: React.Dispatch<React.SetStateAction<number | null>>
 }
 
-const Step2 = ({ onClick }: Props) => {
-  const [images, setImages] = useState<imageItem[]>([])
+const Step2 = ({ onNextClick, setImages, images, setIndexToEdit }: Props) => {
+  const router = useRouter()
 
   const removeImage = (index: number) => {
     setImages((prev) => {
@@ -46,34 +35,15 @@ const Step2 = ({ onClick }: Props) => {
     })
   }
 
-  // Once developing is complete. Remove these lines
-  useEffect(() => {
-    if (hasRun) return
-    hasRun = true
-    const loadMockImage = async () => {
-      const res = await fetch("/student/studentLanding.webp")
-      const blob = await res.blob()
+  const addImage = () => {
+    setIndexToEdit(null)
+    onNextClick()
+  }
 
-      const rawFile = new File([blob], "studentLanding.webp", {
-        type: blob.type,
-      })
-
-      for (let i = 0; i < 5; i++) {
-        const file = renameFileWithIndex(rawFile, i)
-        setImages((prev) => [
-          ...prev,
-          {
-            file: file,
-            displayName: `Halaman_${i + 1}.jpg`,
-            isSuccessfullyValidated: i == 1 || i == 2 ? false : true,
-          },
-        ])
-      }
-    }
-
-    loadMockImage()
-  }, [])
-  // Yes. Remove all of them
+  const replaceImage = (index: number) => {
+    setIndexToEdit(index)
+    onNextClick()
+  }
 
   return (
     <>
@@ -86,7 +56,7 @@ const Step2 = ({ onClick }: Props) => {
       <Button
         className="bg-primary-1100! border-2 border-primary-1000 grid justify-items-center"
         disabled={images.length === 5}
-        onClick={() => onClick()}
+        onClick={() => addImage()}
       >
         <Camera className="size-16 p-4 rounded-full bg-primary-600 overflow-visible stroke-primary-600 fill-neutral-100" />
         <p className="text-primary-500 text-lg font-bold">
@@ -102,23 +72,27 @@ const Step2 = ({ onClick }: Props) => {
           <Preview
             key={i}
             imageItem={img}
-            onRetakeClick={() => onClick()}
+            onRetakeClick={() => replaceImage(i)}
             onDeleteClick={() => removeImage(i)}
           />
         ))}
         <div
-          className={`grid w-full gap-3.5 ${images.length === 5 ? "grid-col1" : "grid-cols-2"}`}
+          className={`grid w-full gap-3.5 ${images.length === 5 ? "grid-cols-1" : "grid-cols-2"}`}
         >
           {images.length !== 5 && (
             <Button
               variant="hollow"
-              onClick={() => onClick()}
+              onClick={() => addImage()}
               className="text-foreground-secondary! border-neutral-300!"
             >
               Tambah Foto
             </Button>
           )}
-          <Button variant="send" disabled={images.length === 0} link="./result">
+          <Button
+            variant="send"
+            disabled={images.length === 0}
+            onClick={() => router.push("./result")}
+          >
             Submit Tugas{" "}
             <SendHorizonal className="size-4.5 fill-current stroke-secondary-600/60" />
           </Button>

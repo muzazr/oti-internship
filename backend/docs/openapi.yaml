@@ -26,6 +26,8 @@ tags:
     description: Whatsapp webhook
   - name: Teachers
     description: Teachers management
+  - name: AI
+    description: AI image processing
 
 components:
   securitySchemes:
@@ -883,107 +885,101 @@ paths:
         "200":
           description: OK
 
-  /teachers:
-    get:
-      tags: [Teachers]
-      summary: Get all teachers
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: OK
-        "401":
-          description: Unauthorized
+  /ai/crop:
     post:
-      tags: [Teachers]
-      summary: Create teacher
-      security:
-        - bearerAuth: []
+      tags: [AI]
+      summary: Crop and enhance assignment photo using AI
+      description: >
+        Proxy endpoint for processing an assignment photo before submission.
+        The backend forwards the uploaded image to the AI inference service and
+        returns either a cropped JPEG preview or a JSON failure result.
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-      responses:
-        "201":
-          description: Created
-        "400":
-          description: Bad Request
-        "401":
-          description: Unauthorized
-
-  /teachers/{id}:
-    get:
-      tags: [Teachers]
-      summary: Get teacher by ID
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-        "401":
-          description: Unauthorized
-        "404":
-          description: Not Found
-    patch:
-      tags: [Teachers]
-      summary: Update teacher
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
+              required: [image]
               properties:
-                full_name:
+                image:
                   type: string
-                  maxLength: 100
-                phone_number:
-                  type: string
-                  maxLength: 20
-                  nullable: true
-            example:
-              full_name: "Budi Santoso"
-              phone_number: "6281234567890"
+                  format: binary
+                  description: Assignment photo. Supported formats are JPG, PNG, and WEBP. Maximum size is 8MB.
       responses:
         "200":
-          description: OK
+          description: >
+            Returns image/jpeg when the document is detected and readable, or
+            application/json when detection/readability fails.
+          headers:
+            X-Detected:
+              description: Whether a document was detected.
+              schema:
+                type: boolean
+            X-Readable:
+              description: Whether the processed document is readable.
+              schema:
+                type: boolean
+            X-Detection-Confidence:
+              description: Document detection confidence score.
+              schema:
+                type: number
+                format: float
+            X-Readability-Score:
+              description: Probability that the image is unreadable. Lower is better.
+              schema:
+                type: number
+                format: float
+            X-Inference-Ms:
+              description: AI inference duration in milliseconds.
+              schema:
+                type: number
+                format: float
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+              example: JPEG binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detected:
+                    type: boolean
+                    example: true
+                  readable:
+                    type: boolean
+                    example: false
+                  detection_confidence:
+                    type: number
+                    format: float
+                    example: 0.8912
+                  readability_score:
+                    type: number
+                    format: float
+                    example: 0.7834
+                  stage_failed:
+                    type: string
+                    enum: [detection, readability, unknown]
+                    example: readability
+                  inference_ms:
+                    type: number
+                    format: float
+                    example: 287.3
         "400":
-          description: Bad Request
-        "401":
-          description: Unauthorized
-        "404":
-          description: Not Found
-    delete:
-      tags: [Teachers]
-      summary: Delete teacher
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-        "401":
-          description: Unauthorized
-        "404":
-          description: Not Found
+          description: Missing image field or unsupported file format.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.
+        "502":
+          description: AI inference service unavailable.
+        "504":
+          description: AI inference service timeout.

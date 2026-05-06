@@ -6,12 +6,14 @@ import { ArrowRight, Lock } from "lucide-react"
 import { DBtoDate } from "@/lib/student"
 
 // vEdit these for backend fetching
-const name = "Maria"
+const name = "Maria Taek"
 const assignmentName = "Aljabar Dasar"
 const studentClass = "8A"
 const deadlineInDB = "2024-04-24 23:59" // yyyy-mm-dd hh:mm
-const completed = false
+const completed = true
 // ^Edit these
+
+const nameToShow = name.split(" ")[0]
 
 const deadline = DBtoDate(deadlineInDB)
 
@@ -27,7 +29,7 @@ const LandingPageSiswa = () => {
           height="360"
         />
         <div>
-          <h1 className="font-bold text-2xl">Hai, {name}!👋</h1>
+          <h1 className="font-bold text-2xl">Hai, {nameToShow}!👋</h1>
           <p className="text-foreground-secondary">
             Kamu dapat mengumpulkan tugas kamu disini! Jangan lupa untuk membaca
             instruksi tugas terlebih dahulu yaa
@@ -42,10 +44,12 @@ const LandingPageSiswa = () => {
           />
           <LeftRight info="Status" content={<Pill finished={completed} />} />
         </Table>
-        <Button variant="default" link="./student/assignment">
-          Kerjakan Sekarang <ArrowRight className="size-4.5" />
-        </Button>
-        <p className="flex justify-center items-center gap-2 text-sm">
+        {!completed && (
+          <Button variant="default" link="./student/assignment">
+            Kerjakan Sekarang <ArrowRight className="size-4.5" />
+          </Button>
+        )}
+        <p className="flex justify-center items-center text-neutral-700 gap-2 text-sm">
           Laman belajar ini hanya untukmu <Lock className="size-4.5" />
         </p>
       </div>

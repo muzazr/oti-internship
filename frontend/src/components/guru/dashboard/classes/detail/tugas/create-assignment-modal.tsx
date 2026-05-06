@@ -9,13 +9,12 @@ import {
   type CreateAssignmentPayload,
 } from "@/lib/api/assignments";
 import { sendAssignmentNotification } from "@/lib/api/whatsapp";
-import type { Student } from "@/lib/api/class-detail";
 
 interface CreateAssignmentModalProps {
   classId: string;
   className: string;
   subjectName?: string;
-  students: Student[];
+  students: Array<{ id: string; full_name: string; whatsapp_number: string | null }>;
   onClose: () => void;
   onSuccess: () => void;
   onError: () => void;
@@ -25,7 +24,7 @@ export function CreateAssignmentModal({
   classId,
   className,
   subjectName,
-  students,
+  students: _students,
   onClose,
   onSuccess,
   onError,
@@ -52,14 +51,11 @@ export function CreateAssignmentModal({
 
       const assignment = await createAssignment(payload);
 
-      // Send WA notification to all students if checkbox is checked
-      if (sendWaNotification) {
-        await sendAssignmentNotification(
-          students,
-          title,
-          className,
-          deadline ? new Date(deadline).toISOString() : null
-        );
+      // Send WA notification via backend (fire-and-forget)
+      if (sendWaNotification && assignment.id) {
+        sendAssignmentNotification(assignment.id, [classId]).catch((err) => {
+          console.error("[WA Notification] Background send failed:", err);
+        });
       }
 
       return assignment;

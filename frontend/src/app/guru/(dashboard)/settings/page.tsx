@@ -10,6 +10,7 @@ import {
   updateProfile,
   updatePassword,
   updateNotificationSettings,
+  updatePhoneNumber,
   uploadAvatar,
 } from "@/lib/api/settings";
 import { SuccessModal } from "@/components/guru/settings/success-modal";
@@ -42,6 +43,9 @@ export default function SettingsPage() {
   // Notification state
   const [webNotifications, setWebNotifications] = useState(true);
   const [whatsappNotifications, setWhatsappNotifications] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [phoneSaved, setPhoneSaved] = useState(false);
 
   // Modal state
   const [showProfileSuccess, setShowProfileSuccess] = useState(false);
@@ -70,6 +74,7 @@ export default function SettingsPage() {
         setAvatarUrl(data.avatar_url);
         setWebNotifications(data.web_notifications);
         setWhatsappNotifications(data.whatsapp_notifications);
+        setPhoneNumber(data.phone_number || "");
       } catch (error) {
         console.warn("Failed to load profile:", error);
         // Fallback: use auth data
@@ -174,6 +179,20 @@ export default function SettingsPage() {
       // Revert on failure
       setWhatsappNotifications(!newValue);
       console.warn("Failed to update notification settings:", error);
+    }
+  };
+
+  const handleSavePhoneNumber = async () => {
+    setIsSavingPhone(true);
+    setPhoneSaved(false);
+    try {
+      await updatePhoneNumber(phoneNumber.trim() || null);
+      setPhoneSaved(true);
+      setTimeout(() => setPhoneSaved(false), 3000);
+    } catch (error) {
+      console.warn("Failed to save phone number:", error);
+    } finally {
+      setIsSavingPhone(false);
     }
   };
 
@@ -485,6 +504,35 @@ export default function SettingsPage() {
                   }`}
                 />
               </button>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-[#F3F4F6] my-4" />
+
+            {/* WhatsApp Phone Number */}
+            <div className="flex flex-col gap-2 mb-4">
+              <label className="text-xs font-bold text-[#191B23]">
+                Nomor WhatsApp Guru
+              </label>
+              <p className="text-[10px] text-[#6B7280] leading-relaxed">
+                Nomor ini digunakan untuk menerima ringkasan notifikasi tugas. Format: 628xxxxxxxxxx
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="628123456789"
+                  className="h-[38px] flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm text-[#191B23] placeholder:text-[#9CA3AF] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+                />
+                <button
+                  onClick={handleSavePhoneNumber}
+                  disabled={isSavingPhone}
+                  className="h-[38px] rounded-lg bg-[#25D366] px-3 text-xs font-medium text-white hover:bg-[#1DA851] disabled:opacity-60 transition-colors"
+                >
+                  {isSavingPhone ? "..." : phoneSaved ? "Tersimpan!" : "Simpan"}
+                </button>
+              </div>
             </div>
 
             {/* Divider */}

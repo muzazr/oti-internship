@@ -87,7 +87,12 @@ export function PeopleTab({
     fullName: string,
     whatsappNumber: string
   ) => {
-    addMutation.mutate({ fullName, whatsappNumber });
+    // Normalize: add 62 prefix if not present
+    const normalizedNumber = whatsappNumber.replace(/\D/g, "");
+    const fullNumber = normalizedNumber.startsWith("62")
+      ? normalizedNumber
+      : `62${normalizedNumber}`;
+    addMutation.mutate({ fullName, whatsappNumber: fullNumber });
   };
 
   return (

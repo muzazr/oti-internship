@@ -8,6 +8,7 @@ export interface ProfileData {
   last_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  phone_number: string | null;
   role: string;
   web_notifications: boolean;
   whatsapp_notifications: boolean;
@@ -42,7 +43,7 @@ export async function fetchProfile(): Promise<ProfileData> {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, first_name, last_name, email, avatar_url, role, web_notifications, whatsapp_notifications"
+      "id, full_name, first_name, last_name, email, avatar_url, phone_number, role, web_notifications, whatsapp_notifications"
     )
     .eq("id", userId)
     .single();
@@ -86,12 +87,32 @@ export async function updateProfile(
     })
     .eq("id", userId)
     .select(
-      "id, full_name, first_name, last_name, email, avatar_url, role, web_notifications, whatsapp_notifications"
+      "id, full_name, first_name, last_name, email, avatar_url, phone_number, role, web_notifications, whatsapp_notifications"
     )
     .single();
 
   if (error) throw new Error(error.message);
   return data as ProfileData;
+}
+
+/**
+ * Update teacher's WhatsApp phone number
+ */
+export async function updatePhoneNumber(
+  phoneNumber: string | null
+): Promise<void> {
+  const session = await getSession();
+  const userId = session.user.id;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      phone_number: phoneNumber,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (error) throw new Error(error.message);
 }
 
 /**

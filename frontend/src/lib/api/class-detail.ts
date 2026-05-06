@@ -28,11 +28,20 @@ export interface Student {
 
 // Helper
 async function getSession() {
+  // Try to refresh session first
   const {
     data: { session },
+  } = await supabase.auth.refreshSession();
+  
+  if (session) return session;
+  
+  // Fallback to getSession
+  const {
+    data: { session: fallbackSession },
   } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-  return session;
+  
+  if (!fallbackSession) throw new Error("Not authenticated");
+  return fallbackSession;
 }
 
 async function ensureProfile(): Promise<string> {
@@ -98,31 +107,80 @@ export async function fetchStudentsByClass(
   return (data as Student[]) || [];
 }
 
-// Add a student to a class
+// Add a student to a class via backend API
 export async function addStudent(
   classId: string,
   fullName: string,
   whatsappNumber: string
 ): Promise<Student> {
-  await ensureProfile();
-  const { data, error } = await supabase
-    .from("students")
-    .insert({
-      class_id: classId,
-      full_name: fullName,
-      whatsapp_number: whatsappNumber,
-    })
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return data as Student;
+  try {
+    const session = await getSession();
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
+    // Auto-generate student_code from WA number + timestamp
+    const studentCode = `WA${whatsappNumber.replace(/\D/g, "").slice(-8)}${Date.now().toString(36).slice(-4)}`;
+
+    console.log("[addStudent] Calling API:", {
+      url: `${API_BASE}/students`,
+      classId,
+      fullName,
+      studentCode,
+      whatsappNumber,
+    });
+
+    const response = await fetch(`${API_BASE}/students`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        class_id: classId,
+        full_name: fullName,
+        student_code: studentCode,
+        whatsapp_number: whatsappNumber || null,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: `HTTP ${response.status}: ${response.statusText}` }));
+      console.error("[addStudent] Error:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: err,
+      });
+      
+      // Handle specific error cases
+      if (response.status === 401) {
+        throw new Error("Session expired. Please refresh the page and login again.");
+      }
+      
+      throw new Error(err.message || `Failed to add student (${response.status})`);
+    }
+
+    const result = await response.json();
+    console.log("[addStudent] Success:", result.data);
+    return result.data as Student;
+  } catch (error) {
+    console.error("[addStudent] Exception:", error);
+    throw error;
+  }
 }
 
-// Delete a student
+// Delete a student via backend API
 export async function deleteStudent(studentId: string): Promise<void> {
-  const { error } = await supabase
-    .from("students")
-    .delete()
-    .eq("id", studentId);
-  if (error) throw new Error(error.message);
+  const session = await getSession();
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
+  const response = await fetch(`${API_BASE}/students/${studentId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to delete student");
+  }
 }

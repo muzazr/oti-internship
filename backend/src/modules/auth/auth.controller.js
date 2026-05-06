@@ -1,10 +1,6 @@
 import { supabaseAdmin } from "../../config/supabase.js"
-<<<<<<< HEAD
-import { successResponse, errorResponse } from "../../shared/utils/response.js"
-=======
 import { AppError } from "../../shared/utils/AppError.js"
-import { successResponse } from "../../shared/utils/response.js"
->>>>>>> origin/main
+import { successResponse, errorResponse } from "../../shared/utils/response.js"
 
 export async function login(req, res, next) {
     try {

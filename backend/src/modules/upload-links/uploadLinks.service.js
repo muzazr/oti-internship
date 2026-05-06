@@ -1,7 +1,7 @@
 import crypto from "crypto"
 import { supabaseAdmin } from "../../config/supabase.js"
 
-const TOKEN_EXPIRY_HOURS = 1
+const TOKEN_EXPIRY_HOURS = 0.5 // 30 menit
 
 export async function generateLinks(assignmentId, studentIds, source) {
     const now = new Date()

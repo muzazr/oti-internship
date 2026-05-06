@@ -305,3 +305,142 @@ function formatSubmissionStatus(status) {
     if (status === "graded") return "Sudah dinilai"
     return status
 }
+
+// ============================================================
+// Assignment Notification - Send WA to students when teacher creates assignment
+// ============================================================
+
+/**
+ * Send assignment notification to all students in specified classes.
+ * Generates unique upload link per student.
+ *
+ * @param {string} assignmentId - The assignment UUID
+ * @param {string[]} classIds - Array of class UUIDs to notify
+ * @param {string} teacherId - The teacher's profile UUID
+ * @returns {Promise<{sent: number, failed: number, total: number}>}
+ */
+export async function notifyStudentsNewAssignment(assignmentId, classIds, teacherId) {
+    // 1. Fetch assignment details
+    const { data: assignment, error: assignmentError } = await supabaseAdmin
+        .from("assignments")
+        .select("id, title, description, deadline, subjects(name)")
+        .eq("id", assignmentId)
+        .single()
+
+    if (assignmentError || !assignment) {
+        throw new Error("Assignment not found")
+    }
+
+    // 2. Fetch all students in target classes who have whatsapp_number
+    const { data: students, error: studentsError } = await supabaseAdmin
+        .from("students")
+        .select("id, full_name, whatsapp_number, class_id, classes(name)")
+        .in("class_id", classIds)
+        .not("whatsapp_number", "is", null)
+
+    if (studentsError) throw studentsError
+
+    if (!students || students.length === 0) {
+        return { sent: 0, failed: 0, total: 0 }
+    }
+
+    // 3. Generate upload links for all students
+    const studentIds = students.map((s) => s.id)
+    const links = await uploadLinksService.generateLinks(assignmentId, studentIds, "whatsapp_bot")
+
+    // Create a map: studentId -> token
+    const linkMap = new Map()
+    for (const link of links) {
+        linkMap.set(link.student_id, link.token)
+    }
+
+    // 4. Send WA messages
+    let sent = 0
+    let failed = 0
+
+    console.log(`[WA Notif] Sending to ${students.length} students...`)
+
+    for (const student of students) {
+        try {
+            const token = linkMap.get(student.id)
+            const uploadUrl = `${env.FRONTEND_URL}/upload/${token}`
+            const message = formatAssignmentNotification(assignment, student, uploadUrl)
+
+            console.log(`[WA Notif] Sending to ${student.full_name} (${student.whatsapp_number})...`)
+            const result = await sendWhatsAppTextMessage(student.whatsapp_number, message)
+            console.log(`[WA Notif] ✅ Sent to ${student.whatsapp_number}:`, result.messages?.[0]?.id)
+            sent++
+        } catch (error) {
+            console.error(`[WA Notif] ❌ Failed to send WA to ${student.whatsapp_number}:`, error.message)
+            console.error(`[WA Notif] Error details:`, error.response?.data || error)
+            failed++
+        }
+    }
+
+    // 5. Send summary to teacher if whatsapp_notifications enabled
+    await sendTeacherSummary(teacherId, assignment.title, sent, failed, students.length)
+
+    return { sent, failed, total: students.length }
+}
+
+/**
+ * Format the assignment notification message with emojis.
+ */
+function formatAssignmentNotification(assignment, student, uploadUrl) {
+    const subjectName = assignment.subjects?.name || "-"
+    const description = assignment.description
+        ? assignment.description.substring(0, 200) + (assignment.description.length > 200 ? "..." : "")
+        : "-"
+    const deadlineText = assignment.deadline
+        ? new Date(assignment.deadline).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        })
+        : "Belum ditentukan"
+
+    return `📚 *Tugas Baru!*
+
+📝 *Judul:* ${assignment.title}
+📖 *Mapel:* ${subjectName}
+📋 *Deskripsi:* ${description}
+⏰ *Deadline:* ${deadlineText}
+
+🔗 *Upload tugas:* ${uploadUrl}
+
+_Link berlaku 30 menit. Jika link tidak dapat diakses, ketik 1 untuk mendapatkan link baru._`
+}
+
+/**
+ * Send summary notification to teacher's WhatsApp.
+ */
+async function sendTeacherSummary(teacherId, assignmentTitle, sent, failed, total) {
+    try {
+        // Check if teacher has whatsapp_notifications enabled
+        const { data: profile, error } = await supabaseAdmin
+            .from("profiles")
+            .select("phone_number, whatsapp_notifications")
+            .eq("id", teacherId)
+            .single()
+
+        if (error || !profile) return
+        if (!profile.whatsapp_notifications) return
+        if (!profile.phone_number) return
+
+        const failedLine = failed > 0 ? `\n❌ Gagal: ${failed} siswa` : ""
+
+        const message = `✅ *Notifikasi Tugas Terkirim*
+
+📝 Tugas: "${assignmentTitle}"
+📤 Terkirim: ${sent}/${total} siswa${failedLine}
+
+_Siswa yang belum punya nomor WA tidak akan menerima notifikasi._`
+
+        await sendWhatsAppTextMessage(profile.phone_number, message)
+    } catch (error) {
+        console.error("Failed to send teacher summary:", error.message)
+        // Don't throw - this is non-critical
+    }
+}

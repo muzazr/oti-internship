@@ -1,96 +1,92 @@
 /**
- * WhatsApp Bot Integration — Placeholder
+ * WhatsApp Bot Integration
  *
- * API key is pre-configured in .env as NEXT_PUBLIC_WA_BOT_API_KEY
- * Teacher doesn't need to input anything — bot works automatically.
- *
- * TODO: Replace placeholder with actual Meta WhatsApp Business API call
- * when you get the API details from your backend team.
+ * Sends notifications via backend endpoint which communicates
+ * with Meta WhatsApp Business API.
  */
 
-const WA_API_KEY = process.env.NEXT_PUBLIC_WA_BOT_API_KEY;
+import { supabase } from "@/lib/supabase";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 /**
- * Send a WhatsApp message to a single phone number.
+ * Get auth token for API calls
  */
-export async function sendWhatsAppMessage(
-  phoneNumber: string,
-  message: string
-): Promise<boolean> {
-  if (!WA_API_KEY) {
-    console.log("[WA Bot] API key not configured, skipping notification");
-    return true; // Still count as success
+async function getAuthToken(): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+  return session.access_token;
+}
+
+/**
+ * Send assignment notification to all students in specified classes via WhatsApp Bot.
+ * Calls backend endpoint which handles Meta Graph API communication.
+ *
+ * @param assignmentId - The assignment UUID
+ * @param classIds - Array of class UUIDs whose students should be notified
+ * @returns Object with sent, failed, total counts
+ */
+export async function sendAssignmentNotification(
+  assignmentId: string,
+  classIds: string[]
+): Promise<{ sent: number; failed: number; total: number }> {
+  const token = await getAuthToken();
+
+  const response = await fetch(
+    `${API_BASE}/whatsapp/notify-assignment/${assignmentId}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ class_ids: classIds }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error("[WA Notification] Failed:", error);
+    throw new Error(
+      error.message || "Failed to send WhatsApp notifications"
+    );
   }
 
-  try {
-    // TODO: Replace with actual Meta WhatsApp Business API call
-    // POST https://graph.facebook.com/v18.0/{phone_number_id}/messages
-    // Headers: { Authorization: `Bearer ${WA_API_KEY}`, Content-Type: "application/json" }
-    // Body: {
-    //   messaging_product: "whatsapp",
-    //   to: phoneNumber,
-    //   type: "text",
-    //   text: { body: message }
-    // }
-
-    console.log(`[WA Bot] Would send to ${phoneNumber}: ${message}`);
-    return true;
-  } catch (error) {
-    console.error("[WA Bot] Failed to send message:", error);
-    return false;
-  }
+  const result = await response.json();
+  return result.data; // { sent, failed, total }
 }
 
 /**
  * Send invite notification when a student is added to a class.
+ * TODO: Move to backend endpoint in future iteration
  */
 export async function sendStudentInvite(
   phoneNumber: string,
   studentName: string,
-  className: string,
-  teacherName: string
+  _className: string,
+  _teacherName: string
 ): Promise<boolean> {
-  const message = `Halo ${studentName}, kamu telah ditambahkan ke kelas ${className} oleh ${teacherName}. Silakan cek tugas aktif di MitBridge.`;
-  return sendWhatsAppMessage(phoneNumber, message);
+  console.log(
+    `[WA Bot] Would send invite to ${phoneNumber} for ${studentName}`
+  );
+  return true;
 }
 
 /**
  * Send grade notification to a student via WhatsApp Bot.
+ * TODO: Move to backend endpoint in future iteration
  */
 export async function sendGradeNotification(
   phoneNumber: string,
   studentName: string,
-  assignmentTitle: string,
-  score: number,
-  feedback: string | null
+  _assignmentTitle: string,
+  _score: number,
+  _feedback: string | null
 ): Promise<boolean> {
-  const feedbackText = feedback
-    ? `\n\nCatatan guru: ${feedback}`
-    : "";
-  const message = `Halo ${studentName}, nilai kamu untuk tugas "${assignmentTitle}" sudah keluar.\n\nNilai: ${score}/100${feedbackText}\n\nSilakan cek di MitBridge untuk detail lebih lanjut.`;
-  return sendWhatsAppMessage(phoneNumber, message);
-}
-
-/**
- * Send assignment notification to all students in a class.
- */
-export async function sendAssignmentNotification(
-  students: Array<{ whatsapp_number: string | null; full_name: string }>,
-  assignmentTitle: string,
-  className: string,
-  deadline: string | null
-): Promise<void> {
-  const deadlineText = deadline
-    ? new Date(deadline).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : "belum ditentukan";
-
-  for (const student of students) {
-    if (!student.whatsapp_number) continue;
-    const message = `Tugas baru: "${assignmentTitle}" telah dibuat di kelas ${className}. Deadline: ${deadlineText}. Silakan kerjakan segera.`;
-    await sendWhatsAppMessage(student.whatsapp_number, message);
-  }
+  console.log(
+    `[WA Bot] Would send grade notification to ${phoneNumber} for ${studentName}`
+  );
+  return true;
 }

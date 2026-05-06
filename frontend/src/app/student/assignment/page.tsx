@@ -24,7 +24,7 @@ Ambil foto masing-masing daun dengan jelas menggunakan kamera HP.
 
 Pastikan serat dan tulang daun terlihat dalam foto. Untuk instruksi lebih lanjut dapat diakses melalui link gdrive berikut`
 const submissionFormat = "Ditulis di kertas A4"
-const attachment = "bit.ly/gauzaganteng"
+const attachment: string = "https://bit.ly/gauzaganteng"
 // ^Edit these
 
 const deadline = DBtoDate(deadlineInDB)
@@ -71,6 +71,13 @@ function deadlineToDisplay() {
   return `${toShow}, ${deadline.hour}:${deadline.minute}`
 }
 
+function fixAttachment(link: string) {
+  if (!link.startsWith("https://")) return `https://${link}`
+  return link
+}
+
+const attachmentToDisplay = fixAttachment(attachment)?.split("://")[1]
+
 const InstruksiPengerjaan = () => {
   return (
     <>
@@ -115,22 +122,28 @@ const InstruksiPengerjaan = () => {
             <p className="text-right font-bold text-primary-500">100</p>
           </div>
         </div>
-        <h3>Lampiran Tugas</h3>
-        <Button
-          className="w-full bg-primary-1100 text-primary-500! flex items-center justify-between! max-w-90 md:w-7/10 mx-auto"
-          link={`https://${attachment}`}
-        >
-          <div className="flex gap-4">
-            <Paperclip className="size-12 bg-primary-1000 p-3.5" />
-            <div>
-              <p className="text-foreground text-sm">{attachment}</p>
-              <p className="text-foreground-secondary text-xs">
-                Lampiran Tugas Lebih Lanjut
-              </p>
-            </div>
-          </div>
-          <ArrowUpRight className="size-6" />
-        </Button>
+        {attachment !== "" && (
+          <>
+            <h3>Lampiran Tugas</h3>
+            <Button
+              className="w-full bg-primary-1100 text-primary-500! flex items-center justify-between! max-w-90 md:w-7/10 mx-auto"
+              link={`${fixAttachment(attachment)}`}
+            >
+              <div className="flex gap-4">
+                <Paperclip className="size-12 bg-primary-1000 p-3.5" />
+                <div>
+                  <p className="text-foreground text-sm">
+                    {attachmentToDisplay}
+                  </p>
+                  <p className="text-foreground-secondary text-xs">
+                    Lampiran Tugas Lebih Lanjut
+                  </p>
+                </div>
+              </div>
+              <ArrowUpRight className="size-6" />
+            </Button>
+          </>
+        )}
       </section>
       <Button link="./assignment/submit">
         Kumpulkan Sekarang <ArrowRight className="size-3.5" />

@@ -4,19 +4,17 @@ import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { imageItem } from "./preview"
 import { renameFileWithIndex } from "@/app/student/assignment/submit/page"
-import { Camera, Check, X } from "lucide-react"
+import { Camera, Check, X, Hourglass } from "lucide-react"
 import Button from "./button"
 
 async function validateImage(imageFile: File): Promise<boolean> {
   // do whatever the AI needs I guess. For now aku kasih setTimeout aja
   return new Promise((resolve) => {
     setTimeout(() => {
-      // const result = Math.random() > 0.3 // 70% true, 30% false
-      resolve(false)
+      const result = Math.random() > 0.3 // 70% true, 30% false
+      resolve(result)
     }, 2000) // 2 seconds delay
   })
-
-  // return response   uncomment this when you can actually get the response from the AI
 }
 
 interface Props {
@@ -43,6 +41,10 @@ const CameraComponent = ({
   const [imageComponentSource, setImageComponentSource] = useState(
     "/student/placeholder.webp",
   )
+
+  const [validationImageStatus, setValidationImageStatus] = useState<
+    "loading" | "success" | "error"
+  >("loading")
 
   const actualIndex = indexToEdit ? indexToEdit + 1 : images.length + 1
 
@@ -150,14 +152,44 @@ const CameraComponent = ({
       })
     })
   }
-
   if (
     cameraStatus === "idle" &&
     imageIsValid === null &&
     imageComponentSource !== "/student/placeholder.webp"
   ) {
     // basically if the system is checking the image
-    return <div>AoKWAWOKAWOK</div>
+    return (
+      <div className="absolute bg-background inset-0 grid place-items-center text-center">
+        <div className="md:max-w-3/5 flex flex-col gap-8 py-22.5">
+          <section>
+            <h1 className="text-3xl font-bold">Hang tight!</h1>
+            <p className="text-foreground-secondary">
+              Checking your photo for clarity...
+            </p>
+          </section>
+          {/* The scanning thing */}
+          <div className="relative">
+            <Image
+              src="/student/verifyImage.webp"
+              alt="Image Checking"
+              width="335"
+              height="450"
+              className=""
+              onLoad={() => setValidationImageStatus("success")}
+              onError={() => setValidationImageStatus("error")}
+            />
+            <div className="absolute inset-0 flex items-end min-h-3 animate-scan">
+              <div className="bg-linear-180 from-40% from-secondary-700 to-transparent h-3 w-full"></div>
+            </div>
+          </div>
+
+          <div className="border border-neutral-200 p-4 rounded-2xl center flex items-center justify-center gap-2">
+            <Hourglass className="size-6 stroke-secondary-700 animate-spin" />
+            <p className="text-sm font-semibold">Analyzing Legibility</p>
+          </div>
+        </div>
+      </div>
+    )
   } else
     return (
       // Actual camera thingy

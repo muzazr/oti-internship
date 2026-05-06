@@ -68,6 +68,7 @@
   --color-success-200: var(--success-200);
 
   --animate-expand: expand 1s linear infinite;
+  --animate-scan: scan 5s ease-in-out infinite;
 }
 
 :root {
@@ -147,5 +148,17 @@
   to {
     opacity: 0;
     scale: 2;
+  }
+}
+
+@keyframes scan {
+  0% {
+    max-height: 100%;
+  }
+  50% {
+    max-height: 0;
+  }
+  100% {
+    max-height: 100%;
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { use } from "react"
 import { Trash, X, RotateCw, ArrowUpFromLine } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
@@ -32,7 +32,11 @@ const Preview = ({
   onDeleteClick,
 }: Props) => {
   const [isValid, setIsValid] = useState(isActuallyValid)
-  if (isValid !== isActuallyValid) setIsValid(isActuallyValid)
+  const [initialized, setInitialized] = useState(false)
+  if (isValid !== isActuallyValid && initialized) {
+    setIsValid(isActuallyValid)
+    setInitialized(true)
+  }
   const fileSize = formatSize(imageItem.file.size)
 
   let rootClassNames =

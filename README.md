@@ -792,4 +792,4 @@ oti-internship/
 
 ## License
 
-MIT
+MITBRIDGE EDUCATION PLATFORM

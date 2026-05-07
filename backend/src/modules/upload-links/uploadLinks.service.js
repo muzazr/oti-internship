@@ -1,7 +1,7 @@
 import crypto from "crypto"
 import { supabaseAdmin } from "../../config/supabase.js"
 
-const TOKEN_EXPIRY_HOURS = 1
+const TOKEN_EXPIRY_HOURS = 0.5 // 30 menit
 
 export async function generateLinks(assignmentId, studentIds, source) {
     const now = new Date()
@@ -39,14 +39,28 @@ export async function findByToken(token) {
             assignments(
                 id, title, description, instruction, deadline,
                 status, allow_late_submission, max_files, max_file_size_mb,
-                accepts_file, accepts_link
+                accepts_file, accepts_link, attachment_url,
+                subjects(name)
             ),
-            students(id, full_name, student_code)
+            students(id, full_name, student_code, class_id, classes(id, name))
         `)
         .eq("token", token)
         .single()
 
     if (error) return null
+
+    // Also fetch submission status for this student + assignment
+    if (data && data.student_id && data.assignment_id) {
+        const { data: submission } = await supabaseAdmin
+            .from("submissions")
+            .select("id, status, score, feedback, submitted_at")
+            .eq("student_id", data.student_id)
+            .eq("assignment_id", data.assignment_id)
+            .limit(1)
+
+        data.submission = submission && submission.length > 0 ? submission[0] : null
+    }
+
     return data
 }
 

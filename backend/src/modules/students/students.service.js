@@ -27,10 +27,10 @@ export async function findByWhatsappNumber(whatsappNumber) {
         .from("students")
         .select("*, classes(id, name, teacher_id)")
         .eq("whatsapp_number", whatsappNumber)
-        .single()
+        .limit(1)
 
-    if (error) return null
-    return data
+    if (error || !data || data.length === 0) return null
+    return data[0]
 }
 
 export async function findByStudentCode(studentCode) {
@@ -38,10 +38,10 @@ export async function findByStudentCode(studentCode) {
         .from("students")
         .select("*, classes(id, name, teacher_id)")
         .eq("student_code", studentCode)
-        .single()
+        .limit(1)
 
-    if (error) return null
-    return data
+    if (error || !data || data.length === 0) return null
+    return data[0]
 }
 
 export async function create(data) {

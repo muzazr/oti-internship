@@ -10,7 +10,9 @@ import assignmentsRoutes from "./modules/assignments/assignments.routes.js"
 import uploadLinksRoutes from "./modules/upload-links/uploadLinks.routes.js"
 import submissionsRoutes from "./modules/submissions/submissions.routes.js"
 import reportsRoutes from "./modules/reports/reports.routes.js"
-import teachersRoutes from "./modules/teachers/teachers.routes.js"
+import dashboardRoutes from "./modules/dashboard/dashboard.routes.js"
+
+
 
 const router = express.Router()
 
@@ -24,6 +26,7 @@ router.use("/assignments", assignmentsRoutes)
 router.use("/upload-links", uploadLinksRoutes)
 router.use("/submissions", submissionsRoutes)
 router.use("/reports", reportsRoutes)
-router.use("/teachers", teachersRoutes)
+router.use("/dashboard", dashboardRoutes)
+
 
 export default router

@@ -1,8 +1,13 @@
 import { env } from "../../config/env.js"
+import { supabaseAdmin } from "../../config/supabase.js"
+import { asyncHandler } from "../../shared/utils/asyncHandler.js"
+import { successResponse } from "../../shared/utils/response.js"
+import { AppError } from "../../shared/utils/AppError.js"
 import {
     getNonTextMessageReply,
     handleIncomingTextMessage,
     sendWhatsAppTextMessage,
+    notifyStudentsNewAssignment,
 } from "./whatsapp.service.js"
 
 export function verifyWebhook(req, res) {
@@ -93,3 +98,32 @@ async function safeReply(to, message) {
         return null
     }
 }
+
+/**
+ * Send assignment notification to students via WhatsApp.
+ * POST /api/whatsapp/notify-assignment/:assignmentId
+ */
+export const sendAssignmentNotification = asyncHandler(async (req, res) => {
+    const { assignmentId } = req.params
+    const { class_ids } = req.body
+
+    if (!class_ids || !Array.isArray(class_ids) || class_ids.length === 0) {
+        throw new AppError("class_ids is required and must be a non-empty array", 400)
+    }
+
+    // Verify the teacher owns this assignment
+    const { data: assignment, error } = await supabaseAdmin
+        .from("assignments")
+        .select("id, teacher_id")
+        .eq("id", assignmentId)
+        .eq("teacher_id", req.user.id)
+        .single()
+
+    if (error || !assignment) {
+        throw new AppError("Assignment not found or you do not have permission", 404)
+    }
+
+    const result = await notifyStudentsNewAssignment(assignmentId, class_ids, req.user.id)
+
+    return successResponse(res, "WhatsApp notifications sent", result)
+})

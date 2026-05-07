@@ -9,6 +9,11 @@ export const createClassSchema = z.object({
         .string()
         .max(20, "Academic year must be at most 20 characters")
         .optional(),
+    subject_id: z
+        .string()
+        .uuid("Invalid subject ID")
+        .nullable()
+        .optional(),
 })
 
 export const updateClassSchema = z.object({
@@ -20,6 +25,11 @@ export const updateClassSchema = z.object({
     academic_year: z
         .string()
         .max(20, "Academic year must be at most 20 characters")
+        .nullable()
+        .optional(),
+    subject_id: z
+        .string()
+        .uuid("Invalid subject ID")
         .nullable()
         .optional(),
 })

@@ -34,7 +34,7 @@ const Button = ({
   onClick = () => {},
   disabled = false,
 }: Props) => {
-  let classNames = `p-4 not-[:disabled]:cursor-pointer rounded-2xl transition-all font-bold flex justify-center items-center text-xs gap-2 hover:not-[:disabled]:opacity-80 disabled:opacity-60 ${handleVariants(variant)} ${className}`
+  const classNames = `p-4 not-[:disabled]:cursor-pointer rounded-2xl transition-all font-bold flex justify-center items-center text-xs gap-2 hover:not-[:disabled]:opacity-80 disabled:opacity-60 ${handleVariants(variant)} ${className}`
   return link === "" ? (
     <button
       className={classNames}
@@ -51,3 +51,4 @@ const Button = ({
 }
 
 export default Button
+

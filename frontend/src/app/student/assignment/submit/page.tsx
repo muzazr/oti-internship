@@ -9,31 +9,17 @@ import { Step1, Step2, Step3 } from "@/modules/student/steps"
 
 import Progress from "@/components/student/progress"
 import Button from "@/components/student/button"
-import { imageItem } from "@/components/student/preview"
 
-// vEdit these for backend fetching
-const studentClass = "8A"
-const studentName = "Maria Taek"
-// ^Edit these
-
-const numberOfSteps = 3
-
-export function renameFileWithIndex(file: File, index: number) {
-  const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1]
-
-  return new File(
-    [file],
-    `${studentClass}_${studentName}_Halaman_${index + 1}.${ext}`,
-    { type: file.type },
-  )
-}
+const steps = [
+  { component: Step1, label: "Langkah 1" },
+  { component: Step2, label: "Langkah 2" },
+  { component: Step3, label: "Langkah 3" },
+]
 
 const SubmissionPage = () => {
-  const [images, setImages] = useState<imageItem[]>([])
-
-  const [indexToEdit, setIndexToEdit] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
 
+  const StepNumber = steps[progress].component
   return (
     <div className="flex gap-4 flex-col items-start *:w-full">
       {progress !== 2 && (
@@ -49,34 +35,16 @@ const SubmissionPage = () => {
       )}
       <div>
         <p className="text-foreground-secondary font-bold text-xs">
-          Langkah {progress + 1} dari {numberOfSteps}
+          Langkah {progress + 1} dari {steps.length}
         </p>
         <Progress
           className="w-full mt-2 h-2 bg-neutral-300"
           progressColor="var(--primary-500)"
           value={progress + 1}
-          max={numberOfSteps}
+          max={steps.length}
         />
       </div>
-      {progress === 0 && (
-        <Step1 onNextClick={() => setProgress(progress + 1)} />
-      )}
-      {progress === 1 && (
-        <Step2
-          onNextClick={() => setProgress(progress + 1)}
-          images={images}
-          setImages={setImages}
-          setIndexToEdit={setIndexToEdit}
-        />
-      )}
-      {progress === 2 && (
-        <Step3
-          setImages={setImages}
-          images={images}
-          indexToEdit={indexToEdit}
-          onNextClick={() => setProgress(progress - 1)}
-        />
-      )}
+      <StepNumber onClick={() => setProgress(progress + 1)} />
     </div>
   )
 }

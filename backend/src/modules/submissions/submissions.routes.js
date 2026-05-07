@@ -4,12 +4,16 @@ import { validate, validateParams } from "../../shared/middlewares/validate.js"
 import { upload } from "../../config/multer.js"
 import { gradeSchema, submissionIdParamSchema } from "./submissions.schema.js"
 import {
+    listSubmissions,
     submitAssignment,
     getSubmission,
     gradeSubmission,
 } from "./submissions.controller.js"
 
 const router = express.Router()
+
+// protected: teacher lists submissions for an assignment
+router.get("/", requireAuth, listSubmissions)
 
 // public: student submits via token (multipart/form-data)
 router.post("/:token", upload.array("files", 20), submitAssignment)

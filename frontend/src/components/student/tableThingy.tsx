@@ -36,3 +36,4 @@ export const UpDown = ({ info, content }: ItemProps) => {
 }
 
 export default Table
+

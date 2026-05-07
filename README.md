@@ -1,8 +1,23 @@
-# MitBridge Educator Portal
+# MitBridge Educator Portal🎓
 
 Platform manajemen tugas untuk guru dan siswa dengan integrasi WhatsApp Bot dan AI untuk validasi foto tugas.
 
+Link Deploy Guru (With ngrok) : https://agility-steep-aviator.ngrok-free.dev/guru/login
+Untuk link unik siswa dapat diakses melalui bot WA , Jangan Lupa untuk Memberi Salam/Greetings Terlebih dahulu ketika pertama kali mengirim pesan kepada siswa 
+Mitbridge Education Bot (Nomor Telp.) : +62 851-4178-3908
+
 ---
+
+
+## Our Team 
+
+1. Renata (Project Manager)
+2. Gauza (UX Engineer dan Frontend)
+3. Yusmin (UI Designer)
+4. Zaki Azhar (Backend)
+5. Ruchita (Frontend)
+6. Gradien (AI Engineer)
+
 
 ## Daftar Isi
 
@@ -233,7 +248,7 @@ npx nodemon server.js
 **Terminal 2 - Frontend:**
 ```bash
 cd frontend
-npm run dev
+pnpm run dev
 ```
 
 **Terminal 3 - Ngrok (untuk WhatsApp webhook):**

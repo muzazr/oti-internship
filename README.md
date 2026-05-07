@@ -183,7 +183,7 @@ FRONTEND_URL=http://localhost:3000
 
 ```bash
 cd frontend
-npm install
+Pnpm install
 ```
 
 Buat file `.env.local`:

@@ -1,4 +1,4 @@
-# MitBridge Educator Portal
+# MitBridge Educator Portal🎓
 
 Platform manajemen tugas untuk guru dan siswa dengan integrasi WhatsApp Bot dan AI untuk validasi foto tugas.
 
@@ -248,7 +248,7 @@ npx nodemon server.js
 **Terminal 2 - Frontend:**
 ```bash
 cd frontend
-npm run dev
+pnpm run dev
 ```
 
 **Terminal 3 - Ngrok (untuk WhatsApp webhook):**

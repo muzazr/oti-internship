@@ -8,6 +8,8 @@ import { CTACards } from "@/components/guru/dashboard/cta-cards";
 import { SubmissionChart } from "@/components/guru/dashboard/submission-chart";
 import { RecentSubmissions } from "@/components/guru/dashboard/recent-submissions";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
 interface DashboardStats {
   totalStudents: number;
   activeAssignments: number;
@@ -32,7 +34,6 @@ interface RecentSubmission {
   status: string;
 }
 
-const DAY_NAMES = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const CHART_ORDER = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
 function getGreeting(): string {
@@ -41,15 +42,6 @@ function getGreeting(): string {
   if (hour < 15) return "Selamat siang";
   if (hour < 18) return "Selamat sore";
   return "Selamat malam";
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
 }
 
 export default function DashboardPage() {
@@ -80,146 +72,48 @@ export default function DashboardPage() {
         return;
       }
 
-      const teacherId = session.user.id;
-
       // --- Profile ---
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name")
-        .eq("id", teacherId)
+        .eq("id", session.user.id)
         .single();
 
       if (profile) {
         setUserName(profile.full_name || "Guru");
       }
 
-      // --- Classes & Students ---
-      const { data: classes } = await supabase
-        .from("classes")
-        .select("id")
-        .eq("teacher_id", teacherId);
+      // --- Fetch all dashboard data from backend API (bypasses RLS) ---
+      try {
+        const res = await fetch(`${API_BASE}/dashboard/stats`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
-      const classIds = classes?.map((c) => c.id) || [];
+        if (res.ok) {
+          const result = await res.json();
+          const data = result.data;
 
-      let totalStudents = 0;
-      if (classIds.length > 0) {
-        const { count } = await supabase
-          .from("students")
-          .select("*", { count: "exact", head: true })
-          .in("class_id", classIds);
-        totalStudents = count || 0;
-      }
-
-      // --- Assignments ---
-      const { data: assignments } = await supabase
-        .from("assignments")
-        .select("id, deadline")
-        .eq("teacher_id", teacherId)
-        .eq("status", "published");
-
-      const activeAssignments = assignments?.length || 0;
-      const assignmentIds = assignments?.map((a) => a.id) || [];
-
-      const today = new Date().toISOString().split("T")[0];
-      const deadlinesToday =
-        assignments?.filter((a) => a.deadline?.startsWith(today)).length || 0;
-
-      // --- Submissions count ---
-      let submitted = 0;
-      if (assignmentIds.length > 0) {
-        const { count } = await supabase
-          .from("submissions")
-          .select("*", { count: "exact", head: true })
-          .in("assignment_id", assignmentIds);
-        submitted = count || 0;
-      }
-
-      const totalExpected = totalStudents * activeAssignments;
-      const notSubmitted = Math.max(0, totalExpected - submitted);
-      const participationRate =
-        totalExpected > 0 ? Math.round((submitted / totalExpected) * 100) : 0;
-
-      setStats({
-        totalStudents,
-        activeAssignments,
-        deadlinesToday,
-        submitted,
-        notSubmitted,
-        participationRate,
-      });
-
-      // --- Weekly chart data (last 7 days from submissions) ---
-      if (assignmentIds.length > 0) {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        const { data: chartSubmissions } = await supabase
-          .from("submissions")
-          .select("submitted_at")
-          .in("assignment_id", assignmentIds)
-          .gte("submitted_at", sevenDaysAgo.toISOString())
-          .order("submitted_at", { ascending: true });
-
-        if (chartSubmissions && chartSubmissions.length > 0) {
-          const dayCounts: Record<string, number> = {};
-          for (const dayName of CHART_ORDER) {
-            dayCounts[dayName] = 0;
-          }
-
-          for (const sub of chartSubmissions) {
-            const date = new Date(sub.submitted_at);
-            const dayName = DAY_NAMES[date.getDay()];
-            dayCounts[dayName] = (dayCounts[dayName] || 0) + 1;
-          }
-
-          setWeeklyData(
-            CHART_ORDER.map((day) => ({ day, count: dayCounts[day] || 0 }))
-          );
-        }
-      }
-
-      // --- Recent submissions (last 5) ---
-      if (assignmentIds.length > 0) {
-        const { data: recentSubs } = await supabase
-          .from("submissions")
-          .select(
-            `
-            id,
-            status,
-            submitted_at,
-            students!inner(full_name, class_id, classes!inner(name)),
-            assignments!inner(subject_id, subjects(name))
-          `
-          )
-          .in("assignment_id", assignmentIds)
-          .order("submitted_at", { ascending: false })
-          .limit(5);
-
-        if (recentSubs && recentSubs.length > 0) {
-          const mapped: RecentSubmission[] = recentSubs.map((sub) => {
-            const student = sub.students as unknown as {
-              full_name: string;
-              class_id: string;
-              classes: { name: string };
-            };
-            const assignment = sub.assignments as unknown as {
-              subject_id: string;
-              subjects: { name: string } | null;
-            };
-
-            return {
-              id: sub.id,
-              student_name: student.full_name,
-              student_initials: getInitials(student.full_name),
-              class_name: student.classes?.name || "-",
-              subject_name: assignment.subjects?.name || "-",
-              submitted_at: sub.submitted_at,
-              status: sub.status,
-            };
+          setStats({
+            totalStudents: data.stats.total_students || 0,
+            activeAssignments: data.stats.active_assignments || 0,
+            deadlinesToday: data.stats.deadlines_today || 0,
+            submitted: data.stats.submitted || 0,
+            notSubmitted: data.stats.not_submitted || 0,
+            participationRate: data.stats.participation_rate || 0,
           });
 
-          setRecentSubmissions(mapped);
+          if (data.weekly_trend && data.weekly_trend.length > 0) {
+            setWeeklyData(data.weekly_trend);
+          }
+
+          if (data.recent_submissions && data.recent_submissions.length > 0) {
+            setRecentSubmissions(data.recent_submissions);
+          }
         }
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats:", err);
       }
 
       setIsLoading(false);

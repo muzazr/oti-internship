@@ -93,17 +93,29 @@ export async function fetchAssignmentsByClass(
   return (data as Assignment[]) || [];
 }
 
-// Get submission count for an assignment
+// Get submission count for an assignment (via backend API to bypass RLS)
 export async function getSubmissionCount(
   assignmentId: string
 ): Promise<number> {
-  const { count, error } = await supabase
-    .from("submissions")
-    .select("*", { count: "exact", head: true })
-    .eq("assignment_id", assignmentId);
-
-  if (error) return 0;
-  return count || 0;
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+  try {
+    const session = await getSession();
+    const res = await fetch(`${API_BASE}/submissions?assignment_id=${assignmentId}`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (res.ok) {
+      const result = await res.json();
+      return result.data?.length || 0;
+    }
+  } catch {
+    // Fallback to direct supabase
+    const { count } = await supabase
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .eq("assignment_id", assignmentId);
+    return count || 0;
+  }
+  return 0;
 }
 
 // Create a new assignment

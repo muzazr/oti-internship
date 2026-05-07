@@ -101,6 +101,7 @@ export async function fetchClassesWithAssignments(): Promise<
 > {
   const session = await getSession();
   const teacherId = session.user.id;
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
   // Get only this teacher's classes
   const { data: classes, error: classesError } = await supabase
@@ -172,11 +173,24 @@ export async function fetchClassesWithAssignments(): Promise<
     const assignmentsWithProgress: AssignmentWithGradingProgress[] = [];
 
     for (const assignment of assignments) {
-      const { count: gradedCount } = await supabase
-        .from("submissions")
-        .select("*", { count: "exact", head: true })
-        .eq("assignment_id", assignment.id)
-        .eq("status", "graded");
+      // Fetch via backend API to bypass RLS
+      let gradedCount = 0;
+      try {
+        const subRes = await fetch(`${API_BASE}/submissions?assignment_id=${assignment.id}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (subRes.ok) {
+          const subResult = await subRes.json();
+          gradedCount = (subResult.data || []).filter((s: { status: string }) => s.status === "graded").length;
+        }
+      } catch {
+        const { count } = await supabase
+          .from("submissions")
+          .select("*", { count: "exact", head: true })
+          .eq("assignment_id", assignment.id)
+          .eq("status", "graded");
+        gradedCount = count || 0;
+      }
 
       assignmentsWithProgress.push({
         id: assignment.id,
@@ -204,9 +218,10 @@ export async function fetchStudentSubmissions(
   assignmentId: string,
   classId: string
 ): Promise<StudentSubmissionStatus[]> {
-  await getSession();
+  const session = await getSession();
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
-  // Get all students in the class
+  // Get students via direct supabase (RLS allows this)
   const { data: students, error: studentsError } = await supabase
     .from("students")
     .select("id, full_name, student_code")
@@ -216,17 +231,28 @@ export async function fetchStudentSubmissions(
   if (studentsError) throw new Error(studentsError.message);
   if (!students || students.length === 0) return [];
 
-  // Get all submissions for this assignment
-  const { data: submissions } = await supabase
-    .from("submissions")
-    .select("*")
-    .eq("assignment_id", assignmentId);
+  // Get submissions via backend API (bypasses RLS)
+  let submissions: SubmissionWithStudent[] = [];
+  try {
+    const res = await fetch(
+      `${API_BASE}/submissions?assignment_id=${assignmentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      }
+    );
+    if (res.ok) {
+      const result = await res.json();
+      submissions = result.data || [];
+    }
+  } catch (err) {
+    console.error("[fetchStudentSubmissions] Failed to fetch via API:", err);
+  }
 
   const submissionMap = new Map<string, SubmissionWithStudent>();
-  if (submissions) {
-    for (const sub of submissions) {
-      submissionMap.set(sub.student_id, sub as SubmissionWithStudent);
-    }
+  for (const sub of submissions) {
+    submissionMap.set(sub.student_id, sub);
   }
 
   return students.map((student) => {

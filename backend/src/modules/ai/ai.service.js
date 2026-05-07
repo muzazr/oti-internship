@@ -8,7 +8,7 @@ export async function requestCropInference(file) {
     try {
         const formData = new FormData()
         const blob = new Blob([file.buffer], { type: file.mimetype })
-        formData.append("image", blob, file.originalname || "image")
+        formData.append("file", blob, file.originalname || "image.jpg")
 
         return await fetch(process.env.AI_CROP_ENDPOINT || DEFAULT_AI_CROP_ENDPOINT, {
             method: "POST",

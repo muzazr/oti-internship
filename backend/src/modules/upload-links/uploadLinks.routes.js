@@ -6,6 +6,7 @@ import {
     generateUploadLinks,
     validateToken,
     recordAccess,
+    getPendingAssignments,
 } from "./uploadLinks.controller.js"
 
 const router = express.Router()
@@ -18,5 +19,8 @@ router.get("/:token", validateToken)
 
 // public: student records page access
 router.post("/:token/access", recordAccess)
+
+// public: get pending assignments for student (identified by token)
+router.get("/:token/pending", getPendingAssignments)
 
 export default router

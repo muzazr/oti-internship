@@ -150,15 +150,34 @@ export async function fetchAnalyticsData(
     return emptyAnalyticsData(classes, assignmentOptions, students.length);
   }
 
-  // 7. Get all submissions for target assignments
-  const { data: submissionsRaw, error: submissionsError } = await supabase
-    .from("submissions")
-    .select("id, student_id, assignment_id, status, score")
-    .in("assignment_id", targetAssignmentIds);
+  // 7. Get all submissions for target assignments (via backend API to bypass RLS)
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+  const session = await supabase.auth.getSession();
+  const accessToken = session.data.session?.access_token;
 
-  if (submissionsError) throw new Error(submissionsError.message);
+  let submissions: Array<{ id: string; student_id: string; assignment_id: string; status: string; score: number | null }> = [];
 
-  const submissions = submissionsRaw || [];
+  // Fetch submissions for each assignment via backend API
+  for (const assignmentId of targetAssignmentIds) {
+    try {
+      const res = await fetch(`${API_BASE}/submissions?assignment_id=${assignmentId}`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
+      if (res.ok) {
+        const result = await res.json();
+        const subs = (result.data || []).map((s: Record<string, unknown>) => ({
+          id: s.id as string,
+          student_id: s.student_id as string,
+          assignment_id: s.assignment_id as string,
+          status: s.status as string,
+          score: s.score as number | null,
+        }));
+        submissions.push(...subs);
+      }
+    } catch (err) {
+      console.error("Failed to fetch submissions for", assignmentId, err);
+    }
+  }
 
   // 8. Build student ID set (for filtering submissions to only our students)
   const studentIdSet = new Set(students.map((s) => s.id));

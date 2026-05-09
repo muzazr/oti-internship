@@ -6,6 +6,9 @@ Link Deploy Guru (With ngrok) : https://agility-steep-aviator.ngrok-free.dev/gur
 Untuk link unik siswa dapat diakses melalui bot WA , Jangan Lupa untuk Memberi Salam/Greetings Terlebih dahulu ketika pertama kali mengirim pesan kepada siswa 
 Mitbridge Education Bot (Nomor Telp.) : +62 851-4178-3908
 
+Figjam UX-Research : https://www.figma.com/board/GGUNTTKxBitwtZimQcti2E/Figjam-Internship-OmahTI-UGM--Rsearch-?node-id=0-1&t=TLkzavhDZ6wKgGFd-1
+Figma UI-Design : https://www.figma.com/design/j7zuZYKvmzdB2axojslld6/Figma-Internship-OmahTI-UGM--Design-?node-id=3-3&t=8KR49r4YvPKyFNB5-1
+
 ---
 
 
